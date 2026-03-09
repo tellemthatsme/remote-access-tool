@@ -4,3 +4,4 @@ node_modules/
 .env
 *.pid
 *.tmp
+CLOUDFLARE_TUNNEL.txt

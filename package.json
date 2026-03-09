@@ -1,0 +1,28 @@
+{
+  "name": "remote-access-tool",
+  "version": "1.0.0",
+  "description": "Free remote access tool for PC with Chrome Remote Desktop integration",
+  "main": "dashboard.cjs",
+  "scripts": {
+    "start": "node dashboard.cjs",
+    "dev": "node dashboard.cjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "remote-access",
+    "chrome-remote-desktop",
+    "remote-management",
+    "nodejs",
+    "automation"
+  ],
+  "author": "Karma",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karma/remote-access-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/karma/remote-access-tool/issues"
+  },
+  "homepage": "https://github.com/karma/remote-access-tool"
+}

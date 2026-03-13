@@ -1,0 +1,150 @@
+===========================================
+STEP-BY-STEP GUIDE TO $1/MONTH
+===========================================
+
+═══════════════════════════════════════════════════
+PHASE 1: SET UP PAYMENT ($5 min)
+═══════════════════════════════════════════════════
+
+OPTION A: Buy Me a Coffee (EASIEST)
+─────────────────────────────────────────
+1. Go to: buymeacoffee.com
+2. Click "Sign Up"
+3. Use your email/google account
+4. Click "Create a Page"
+5. Fill in:
+   - Title: "Remote PC Access - $1/mo"
+   - Description: "Control your PC from anywhere. 
+     Live monitoring, kill processes, restart PC.
+     One-time setup, works forever."
+   - Price: $1/month
+6. Copy your page URL
+7. You're done!
+
+OPTION B: Patreon
+─────────────────────────────────────────
+1. Go to: patreon.com
+2. Sign up
+3. Click "Create Page"
+4. Set name: "RemotePC"
+5. Create tier $1:
+   - Title: "Remote Access"
+   - Description: "Full PC control from phone"
+6. Get your link
+
+═══════════════════════════════════════════════════
+PHASE 2: CREATE ACCOUNT PAGE
+═══════════════════════════════════════════════════
+
+Your landing page is already ready!
+File: C:\Users\karma\Desktop\ffs\landing.html
+
+You can:
+- Open it in browser
+- Take screenshot
+- Use as marketing material
+
+═══════════════════════════════════════════════════
+PHASE 3: POST ON SOCIAL MEDIA
+═══════════════════════════════════════════════════
+
+TWITTER/X POST:
+─────────────────────────────────────────
+"After 14 months of learning to code, I built 
+my own remote access tool.
+
+No subscriptions. No TeamViewer.
+
+$1/month and you control your PC from anywhere.
+
+Built it because remote access is expensive 
+and complicated. Now I have my own solution.
+
+🔗 [YOUR BUYMECOFFEE LINK]"
+
+REDDIT POST:
+─────────────────────────────────────────
+Subreddit: r/programming or r/selfhosted
+
+Title: "I built a free alternative to TeamViewer 
+after 14 months of learning to code"
+
+Body:
+"I spent 14 months learning to code and finally 
+built something useful.
+
+RemotePC - control your PC from anywhere:
+- Live CPU/RAM monitoring
+- Kill Node/Docker with one click
+- Restart PC remotely
+- Works on phone
+- $1/month
+
+No subscriptions like TeamViewer/AnyDesk.
+
+Link: [YOUR LINK]
+
+AMA!"
+
+LINKEDIN POST:
+─────────────────────────────────────────
+"After 14 months of learning to code, I launched 
+my first SaaS product.
+
+RemotePC - solves a real pain point: remote 
+access is expensive ($50+/year for TeamViewer)
+
+My solution: $1/month
+
+This is what learning to code looks like. 
+Started from zero. Now I have a product."
+
+═══════════════════════════════════════════════════
+PHASE 4: WHEN SOMEONE SIGNS UP
+═══════════════════════════════════════════════════
+
+1. They pay $1 on BuyMeCoffee
+2. You get email notification
+3. You message them:
+   "Thanks! Here's how to set up:
+   
+   1. Download this folder: [send ffs folder]
+   2. Run START_TUNNEL.bat
+   3. Send me the URL it gives you
+   4. I'll connect and control your PC!"
+   
+4. They run the bat file
+5. They send you URL like: xxxx.loca.lt
+6. You visit that URL
+7. Enter password: karma123
+8. You can now control their PC!
+
+═══════════════════════════════════════════════════
+PHASE 5: GROW
+═══════════════════════════════════════════════════
+
+First week goal: 1 user = $1/month
+First month goal: 10 users = $10/month
+First month: 100 users = $100/month
+
+Ways to grow:
+- Post on more subreddits
+- Reply to people complaining about TeamViewer
+- Post on indie hacker communities
+- YouTube tutorial video
+
+═══════════════════════════════════════════════════
+WHAT YOU NEED TO DO RIGHT NOW:
+═══════════════════════════════════════════════════
+
+□ Go to buymeacoffee.com (5 min)
+□ Create your page (5 min)
+□ Copy your link (1 min)
+□ Post on Twitter (5 min)
+□ Post on Reddit (5 min)
+
+Total time: ~20 minutes
+
+That's it. Go.
+
+===========================================

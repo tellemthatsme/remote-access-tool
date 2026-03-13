@@ -6,16 +6,34 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
 </p>
 
-A free, reliable remote access solution for Windows PCs that avoids paid tools like TeamViewer/AnyDesk. Features Chrome Remote Desktop integration, auto-login, process management, and a web-based dashboard.
+A free, reliable remote access solution for Windows PCs that avoids paid tools like TeamViewer/AnyDesk. Features a powerful web-based dashboard with real-time monitoring.
 
 ## Features
 
-- **Chrome Remote Desktop Integration** - Automatic startup and login
-- **Auto-Login** - Windows auto-login without password prompt
-- **Process Management** - Kill Node.js, npm, npx, and Docker processes with one click
-- **Web Dashboard** - Real-time system stats and remote management interface
-- **Cloudflare Tunnel** - Expose dashboard to the internet securely
-- **Billing System Ready** - Monetization via Patreon/BuyMeACoffee integration
+### Monitoring
+- **CPU Monitoring** - Real-time usage with history graph
+- **RAM Monitoring** - Memory usage with history graph
+- **Disk Usage** - Per-drive space information (total, used, free)
+- **Temperature** - CPU temperature (if sensor available)
+- **Network Stats** - Total data uploaded/downloaded
+- **Process List** - Top 10 processes by memory usage
+
+### Alerts
+- **Automatic Alerts** - Warnings when CPU/RAM exceeds thresholds
+- **Visual Indicators** - Color-coded status (green/yellow/red)
+- **Alert History** - View recent alerts in dashboard
+
+### Process Management
+- **Kill Node** - Terminate all Node.js processes (node, npm, npx, yarn, pnpm, bun)
+- **Kill Docker** - Stop Docker Desktop and related processes
+
+### Remote Control
+- **Restart PC** - Remote restart with confirmation
+- **Shutdown PC** - Remote shutdown with confirmation
+
+### Remote Access
+- **Chrome Remote Desktop** - Full remote desktop control
+- **Cloudflare Tunnel** - Secure internet exposure without port forwarding
 
 ## Quick Start
 
@@ -29,7 +47,7 @@ A free, reliable remote access solution for Windows PCs that avoids paid tools l
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/karma/remote-access-tool.git
+   git clone https://github.com/tellemthatsme/remote-access-tool.git
    cd remote-access-tool
    ```
 
@@ -45,6 +63,35 @@ A free, reliable remote access solution for Windows PCs that avoids paid tools l
 
 4. Open http://localhost:3001
 5. Login with password: `karma123`
+
+## Dashboard Features
+
+### Main Dashboard
+- Real-time CPU & RAM percentage
+- Historical graph (last 30 readings)
+- System uptime
+- Quick action buttons
+
+### Disk Section
+- All drives with usage bars
+- Color-coded (red when >90%)
+
+### Temperature Section
+- CPU temperature (if available)
+- Status: Normal/Warm/Hot
+
+### Network Section
+- Total downloaded data
+- Total uploaded data
+
+### Process Section
+- Top 10 processes by memory
+- Memory usage per process
+
+### Alerts Section
+- Automatic warnings
+- CPU >80% = Warning, >90% = Critical
+- RAM >80% = Warning, >90% = Critical
 
 ## Usage
 
@@ -71,15 +118,68 @@ KILL_NODE.bat       # Kill all Node.js processes
 KILL_DOCKER.bat     # Kill Docker processes
 ```
 
-## Documentation
+## API Endpoints
 
-| File | Description |
-|------|-------------|
-| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Complete installation instructions |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Developer contribution guide |
-| [CHANGELOG.md](./CHANGELOG.md) | Version history |
-| [SECURITY.md](./SECURITY.md) | Security policy |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/stats` | GET | CPU, RAM, uptime, memory, alerts |
+| `/api/disk` | GET | Disk usage per drive |
+| `/api/processes` | GET | Top processes by memory |
+| `/api/network` | GET | Network traffic stats |
+| `/api/temp` | GET | CPU temperature |
+| `/api/kill-node` | POST | Kill Node processes |
+| `/api/kill-docker` | POST | Kill Docker |
+| `/api/restart` | POST | Restart PC |
+| `/api/shutdown` | POST | Shutdown PC |
+
+## Configuration
+
+### Change Password
+
+Edit `dashboard.cjs`:
+
+```javascript
+const PASSWORD = "karma123";  // Change this
+```
+
+### Change PC Name
+
+Edit `dashboard.cjs`:
+
+```javascript
+const PC_NAME = "DESKTOP-KARMA";  // Change this
+```
+
+### Change Port
+
+Edit `dashboard.cjs`:
+
+```javascript
+const PORT = 3001;  // Change this
+```
+
+## Project Structure
+
+```
+remote-access-tool/
+├── dashboard.cjs          # Main dashboard server (v1.1 Enhanced)
+├── package.json           # NPM configuration
+├── README.md              # This file
+├── SETUP_GUIDE.md         # Installation guide
+├── ARCHITECTURE.md        # Technical architecture
+├── CONTRIBUTING.md        # Developer guidelines
+├── CHANGELOG.md           # Version history
+├── SECURITY.md            # Security policy
+├── LICENSE                # MIT License
+├── .env.example           # Environment variables template
+├── .gitignore             # Git ignore patterns
+├── START_DASHBOARD.bat    # Start dashboard on boot
+├── START_TUNNEL.bat       # Start Cloudflare Tunnel
+├── KILL_NODE.bat          # Kill Node.js processes
+├── KILL_DOCKER.bat        # Kill Docker processes
+├── cloudflared.exe        # Cloudflare Tunnel binary
+└── landing.html           # Landing page
+```
 
 ## System Requirements
 
@@ -88,50 +188,12 @@ KILL_DOCKER.bat     # Kill Docker processes
 - Chrome browser (for remote access)
 - Internet connection
 
-## Configuration
-
-### Change Password
-
-Edit `dashboard.cjs` and change the password:
-
-```javascript
-const AUTH_PASSWORD = "your-new-password";
-```
-
-### Change Port
-
-Edit `dashboard.cjs`:
-
-```javascript
-const PORT = 3001; // Change this
-```
-
-## Project Structure
-
-```
-remote-access-tool/
-├── dashboard.cjs          # Main dashboard server
-├── package.json           # NPM configuration
-├── README.md              # This file
-├── SETUP_GUIDE.md         # Installation guide
-├── ARCHITECTURE.md        # Technical docs
-├── CONTRIBUTING.md        # Contribution guidelines
-├── CHANGELOG.md           # Version history
-├── SECURITY.md            # Security policy
-├── LICENSE                # MIT License
-├── .env.example           # Environment variables
-├── .gitignore             # Git ignore patterns
-├── START_DASHBOARD.bat    # Start dashboard on boot
-├── START_TUNNEL.bat       # Start Cloudflare Tunnel
-├── KILL_NODE.bat          # Kill Node.js processes
-└── KILL_DOCKER.bat        # Kill Docker processes
-```
-
 ## Technologies
 
 - **Node.js** - Runtime
 - **Express** - Web framework
-- **os-utils** - System information
+- **Windows WMIC** - System information
+- **PowerShell** - Temperature & processes
 - **Cloudflare Tunnel** - Secure tunneling
 
 ## License

@@ -2,6 +2,15 @@ const http = require('http');
 const { exec, execSync } = require('child_process');
 const os = require('os');
 const fs = require('fs');
+const path = require('path');
+
+// Import Cline Agent System
+let clineAgent = null;
+try {
+  clineAgent = require('./src/agents/main-cline-agent.js');
+} catch (error) {
+  console.warn('Cline Agent System not available:', error.message);
+}
 
 const PORT = 3001;
 const PASSWORD = "karma123";
@@ -16,14 +25,14 @@ const history = {
 function getStats() {
   const cpus = os.cpus();
   let totalIdle = 0, totalTick = 0;
-  
+
   cpus.forEach(cpu => {
     for (let type in cpu.times) {
       totalTick += cpu.times[type];
     }
     totalIdle += cpu.times.idle;
   });
-  
+
   const cpu = Math.round(100 - (100 * totalIdle / totalTick));
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
@@ -31,21 +40,21 @@ function getStats() {
   const ram = Math.round(100 - (100 * freeMem / totalMem));
   const memUsedGB = (usedMem / 1073741824).toFixed(1);
   const memTotalGB = (totalMem / 1073741824).toFixed(1);
-  
+
   history.cpu.push(cpu);
   history.ram.push(ram);
   if (history.cpu.length > history.maxLength) history.cpu.shift();
   if (history.ram.length > history.maxLength) history.ram.shift();
-  
+
   const uptime = os.uptime();
   const days = Math.floor(uptime / 86400);
   const hours = Math.floor((uptime % 86400) / 3600);
   const mins = Math.floor((uptime % 3600) / 60);
   const uptimeStr = days > 0 ? days + 'd ' + hours + 'h' : hours + 'h ' + mins + 'm';
-  
-  return { 
-    cpu, 
-    ram, 
+
+  return {
+    cpu,
+    ram,
     uptime: uptimeStr,
     memUsed: memUsedGB,
     memTotal: memTotalGB,
@@ -59,10 +68,10 @@ function getAlerts(cpu, ram) {
   const alerts = [];
   if (cpu > 90) alerts.push({ type: 'danger', msg: `🔴 CPU critical: ${cpu}%` });
   else if (cpu > 80) alerts.push({ type: 'warning', msg: `🟡 CPU high: ${cpu}%` });
-  
+
   if (ram > 90) alerts.push({ type: 'danger', msg: `🔴 RAM critical: ${ram}%` });
   else if (ram > 80) alerts.push({ type: 'warning', msg: `🟡 RAM high: ${ram}%` });
-  
+
   return alerts;
 }
 
@@ -71,7 +80,7 @@ function getDiskInfo() {
     const output = execSync('wmic logicaldisk get size,freespace,caption', { encoding: 'utf8' });
     const lines = output.trim().split('\n').slice(1);
     const disks = [];
-    
+
     lines.forEach(line => {
       const parts = line.trim().split(/\s+/);
       if (parts.length >= 3 && parts[0]) {
@@ -80,7 +89,7 @@ function getDiskInfo() {
         const totalSize = parseInt(parts[2]) || 0;
         const usedSpace = totalSize - freeSpace;
         const percentUsed = totalSize > 0 ? Math.round((usedSpace / totalSize) * 100) : 0;
-        
+
         if (totalSize > 0) {
           disks.push({
             drive: caption,
@@ -103,7 +112,7 @@ function getProcessList() {
     const output = execSync('wmic process get ProcessId,Name,WorkingSetSize /format:csv', { encoding: 'utf8' });
     const lines = output.trim().split('\n').slice(1);
     const processes = [];
-    
+
     const memMap = {};
     lines.forEach(line => {
       const parts = line.split(',');
@@ -111,7 +120,7 @@ function getProcessList() {
         const name = parts[1] || 'Unknown';
         const pid = parseInt(parts[2]) || 0;
         const mem = parseInt(parts[3]) || 0;
-        
+
         if (mem > 0 && name !== 'Name') {
           if (!memMap[name]) {
             memMap[name] = { name, memory: 0, count: 0 };
@@ -121,7 +130,7 @@ function getProcessList() {
         }
       }
     });
-    
+
     return Object.values(memMap)
       .sort((a, b) => b.memory - a.memory)
       .slice(0, 10)
@@ -140,7 +149,7 @@ function getNetworkStats() {
     const output = execSync('powershell -Command "Get-NetAdapterStatistics | Select-Object -First 1 ReceivedBytes,SentBytes"', { encoding: 'utf8' });
     const lines = output.trim().split('\n');
     let received = 0, sent = 0;
-    
+
     lines.forEach(line => {
       const match = line.match(/(\d+)/g);
       if (match && match.length >= 2) {
@@ -148,7 +157,7 @@ function getNetworkStats() {
         sent = parseInt(match[1]) || 0;
       }
     });
-    
+
     return {
       received: (received / 1073741824).toFixed(2),
       sent: (sent / 1073741824).toFixed(2)
@@ -166,8 +175,8 @@ function getTemperature() {
       const celsius = (temp - 2732) / 10;
       return Math.round(celsius);
     }
-  } catch (e) {}
-  
+  } catch (e) { }
+
   return null;
 }
 
@@ -572,44 +581,44 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
     return;
   }
-  
+
   if (req.url === '/api/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(getStats()));
     return;
   }
-  
+
   if (req.url === '/api/disk') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(getDiskInfo()));
     return;
   }
-  
+
   if (req.url === '/api/processes') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(getProcessList()));
     return;
   }
-  
+
   if (req.url === '/api/network') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(getNetworkStats()));
     return;
   }
-  
+
   if (req.url === '/api/temp') {
     const temp = getTemperature();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ temp }));
     return;
   }
-  
+
   if (req.url === '/api/kill-node' && req.method === 'POST') {
     const processes = ['node.exe', 'npm.exe', 'npx.exe', 'yarn.exe', 'pnpm.exe', 'bun.exe'];
     processes.forEach(p => exec('taskkill /F /IM ' + p + ' 2>nul'));
@@ -619,7 +628,7 @@ const server = http.createServer((req, res) => {
     }, 500);
     return;
   }
-  
+
   if (req.url === '/api/kill-docker' && req.method === 'POST') {
     exec('taskkill /F /IM docker.exe 2>nul');
     exec('taskkill /F /IM "Docker Desktop.exe" 2>nul');
@@ -628,21 +637,21 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ success: true }));
     return;
   }
-  
+
   if (req.url === '/api/restart' && req.method === 'POST') {
     exec('shutdown /r /t 10 /c "RemotePC: Restart"');
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return;
   }
-  
+
   if (req.url === '/api/shutdown' && req.method === 'POST') {
     exec('shutdown /s /t 10 /c "RemotePC: Shutdown"');
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return;
   }
-  
+
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(html);
 });

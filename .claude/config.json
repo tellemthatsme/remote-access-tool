@@ -1,0 +1,230 @@
+{
+    "project": {
+        "name": "Cline Remote Access Tool",
+        "description": "Enhanced AI-powered remote access and development platform"
+    },
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "C:/Users/karma/Desktop/remote-access-tool"
+            ],
+            "description": "Filesystem access for project workspace"
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "description": "Persistent memory for context management"
+        },
+        "fetch": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-fetch"
+            ],
+            "description": "Web fetching for research capabilities"
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ],
+            "description": "Enhanced reasoning for complex tasks"
+        },
+        "playwright": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@playwright/mcp@0.0.38"
+            ],
+            "description": "Browser automation for web interactions"
+        },
+        "git": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-git"
+            ],
+            "description": "Git operations"
+        },
+        "context7": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp"
+            ],
+            "env": {
+                "DEFAULT_MINIMUM_TOKENS": "4000"
+            },
+            "description": "Long-term memory and context management"
+        },
+        "python-execution": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-python-execution"
+            ],
+            "description": "Python code execution"
+        },
+        "docker": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-docker"
+            ],
+            "description": "Docker container management"
+        },
+        "github": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "description": "GitHub API operations"
+        },
+        "aws": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-aws"
+            ],
+            "description": "AWS cloud services integration"
+        },
+        "azure": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-azure"
+            ],
+            "description": "Azure cloud services integration"
+        },
+        "gcp": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-gcp"
+            ],
+            "description": "Google Cloud Platform integration"
+        },
+        "kubernetes": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-kubernetes"
+            ],
+            "description": "Kubernetes cluster management"
+        },
+        "security-scanner": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-security-scanner"
+            ],
+            "description": "Security vulnerability scanning"
+        },
+        "code-reviewer": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-code-reviewer"
+            ],
+            "description": "Automated code review and analysis"
+        },
+        "testing-framework": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-testing-framework"
+            ],
+            "description": "Automated testing and quality assurance"
+        },
+        "monitoring": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-monitoring"
+            ],
+            "description": "System and application monitoring"
+        }
+    },
+    "enabledMCP": [
+        "filesystem",
+        "memory",
+        "fetch",
+        "sequential-thinking",
+        "playwright",
+        "git",
+        "context7",
+        "python-execution",
+        "docker",
+        "github",
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "security-scanner",
+        "code-reviewer",
+        "testing-framework",
+        "monitoring"
+    ],
+    "permissions": {
+        "allow": [
+            "Bash(id)",
+            "Bash(npx)",
+            "Bash(node)",
+            "Bash(npm)",
+            "Bash(python)",
+            "Bash(pip)",
+            "Bash(git)",
+            "Bash(docker)",
+            "Read(id)",
+            "Write(id)",
+            "Glob(id)",
+            "Grep(id)",
+            "WebFetch(id)",
+            "TodoWrite(id)",
+            "TodoRead(id)"
+        ],
+        "deny": []
+    },
+    "features": {
+        "maxTokens": 200000,
+        "thinkingEnabled": true,
+        "computerUseEnabled": true,
+        "maxTurns": 100
+    },
+    "skills": {
+        "autoLoad": true,
+        "preferredSkills": [
+            "python-pro",
+            "javascript-pro",
+            "react-expert",
+            "fastapi-expert",
+            "docker",
+            "git-workflow",
+            "security-best-practices",
+            "testing-automation",
+            "devops-pipelines",
+            "performance-optimization"
+        ]
+    },
+    "ignorePatterns": [
+        "node_modules/**",
+        ".git/**",
+        "*.log",
+        "*.pyc",
+        "__pycache__/**",
+        ".venv/**",
+        "venv/**",
+        "dist/**",
+        "build/**",
+        "*.lock",
+        ".claude/**",
+        "agents/**",
+        "skills/**"
+    ]
+}

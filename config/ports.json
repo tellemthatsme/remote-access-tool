@@ -1,0 +1,49 @@
+{
+  "assignments": {
+    "dashboard": {
+      "port": 3001,
+      "environment": "development",
+      "description": "Cline Dashboard Web Interface",
+      "lastUsed": "2026-03-15T05:19:48.616Z"
+    },
+    "api-server": {
+      "port": 3000,
+      "environment": "development",
+      "description": "Main API Server",
+      "lastUsed": "2026-03-15T05:19:48.616Z"
+    },
+    "monitoring": {
+      "port": 6001,
+      "environment": "development",
+      "description": "System Monitoring Service",
+      "lastUsed": "2026-03-15T05:19:48.616Z"
+    }
+  },
+  "ranges": {
+    "development": {
+      "start": 3000,
+      "end": 3999
+    },
+    "testing": {
+      "start": 4000,
+      "end": 4999
+    },
+    "production": {
+      "start": 5000,
+      "end": 5999
+    },
+    "monitoring": {
+      "start": 6000,
+      "end": 6999
+    },
+    "api": {
+      "start": 7000,
+      "end": 7999
+    },
+    "internal": {
+      "start": 8000,
+      "end": 8999
+    }
+  },
+  "lastUpdated": "2026-03-15T05:19:48.631Z"
+}

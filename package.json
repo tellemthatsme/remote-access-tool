@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
-  "version": "1.0.0",
-  "description": "Free remote access tool for PC with Chrome Remote Desktop integration",
+  "version": "1.4.0",
+  "description": "Remote PC monitoring and control dashboard v1.4 - Glass UI, CSV Export, Theme Toggle, User Management",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",
@@ -10,7 +10,9 @@
   },
   "keywords": [
     "remote-access",
-    "chrome-remote-desktop",
+    "monitoring",
+    "gpu",
+    "websocket",
     "remote-management",
     "nodejs",
     "automation"
@@ -19,13 +21,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/karma/remote-access-tool.git"
+    "url": "https://github.com/tellemthatsme/remote-access-tool.git"
   },
   "bugs": {
-    "url": "https://github.com/karma/remote-access-tool/issues"
+    "url": "https://github.com/tellemthatsme/remote-access-tool/issues"
   },
-  "homepage": "https://github.com/karma/remote-access-tool",
+  "homepage": "https://github.com/tellemthatsme/remote-access-tool",
   "dependencies": {
-    "axios": "^1.13.6"
+    "axios": "^1.13.6",
+    "ws": "^8.20.0"
   }
 }

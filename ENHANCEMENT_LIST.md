@@ -2,77 +2,79 @@
 
 ## 📊 All Features (Current + Future)
 
-### CURRENT (v1.1) - ✅ Working
+### CURRENT (v1.3) - ✅ Working
 
 | #   | Feature             | Status | Description                    |
 | --- | ------------------- | ------ | ------------------------------ |
 | 1   | CPU Monitoring      | ✅     | Real-time CPU percentage       |
 | 2   | RAM Monitoring      | ✅     | Memory usage with bar          |
-| 3   | CPU History Graph   | ✅     | Last 30 readings               |
-| 4   | RAM History Graph   | ✅     | Last 30 readings               |
+| 3   | CPU History Graph   | ✅     | Last 60 readings               |
+| 4   | RAM History Graph   | ✅     | Last 60 readings               |
 | 5   | Memory Details      | ✅     | GB used / GB total             |
 | 6   | Disk Usage          | ✅     | Per-drive space info           |
 | 7   | Temperature         | ✅     | CPU temp (if sensor available) |
 | 8   | Network Stats       | ✅     | Total upload/download          |
-| 9   | Process List        | ✅     | Top 10 by memory               |
+| 9   | Process List        | ✅     | Top 15 by memory               |
 | 10  | Alert System        | ✅     | Warning/Critical alerts        |
 | 11  | Kill Node           | ✅     | One-click stop Node            |
 | 12  | Kill Docker         | ✅     | One-click stop Docker          |
-| 13  | Restart PC          | ✅     | Remote restart                 |
-| 14  | Shutdown PC         | ✅     | Remote shutdown                |
-| 15  | Mobile Responsive   | ✅     | Works on phone                 |
-| 16  | Dark Theme          | ✅     | Dark UI                        |
-| 17  | Password Protection | ✅     | Login required                 |
-| 18  | Cloudflare Tunnel   | ✅     | Internet access                |
+| 13  | Custom Kill         | ✅     | Kill any process by name       |
+| 14  | Windows Services    | ✅     | View running/stopped services  |
+| 15  | Restart PC          | ✅     | Remote restart                 |
+| 16  | Shutdown PC         | ✅     | Remote shutdown                |
+| 17  | Mobile Responsive   | ✅     | Works on phone                 |
+| 18  | Dark Theme          | ✅     | Dark UI                        |
+| 19  | Password Protection | ✅     | Login required                 |
+| 20  | Cloudflare Tunnel   | ✅     | Internet access                |
+| 21  | GPU Monitoring      | ✅     | NVIDIA/AMD GPU usage & temp    |
+| 22  | Historical Data     | ✅     | Saves to file (30 days)        |
+| 23  | WebSocket           | ✅     | Real-time updates              |
+| 24  | PWA Ready           | ✅     | Install as standalone app      |
 
 ---
 
-### PHASE 1 - User Management (v1.2)
+### PHASE 1 - User Management (v1.4)
 
 | #   | Feature         | Priority | Description                           |
 | --- | --------------- | -------- | ------------------------------------- |
-| 19  | Multiple Users  | HIGH     | Different logins for different people |
-| 20  | User Roles      | HIGH     | Admin vs Viewer (can't kill)          |
-| 21  | Session Timeout | MEDIUM   | Auto-logout after inactivity          |
-| 22  | User Profiles   | MEDIUM   | Save settings per user                |
+| 25  | Multiple Users  | HIGH     | Different logins for different people |
+| 26  | User Roles      | HIGH     | Admin vs Viewer (can't kill)          |
+| 27  | Session Timeout | MEDIUM   | Auto-logout after inactivity          |
+| 28  | User Profiles   | MEDIUM   | Save settings per user                |
 
 ---
 
-### PHASE 2 - Enhanced Monitoring (v1.3)
+### PHASE 2 - Enhanced Monitoring (v1.5)
 
-| #   | Feature         | Priority | Description                      |
-| --- | --------------- | -------- | -------------------------------- |
-| 23  | GPU Monitoring  | HIGH     | Graphics card usage (NVIDIA/AMD) |
-| 24  | VRAM Monitoring | HIGH     | GPU memory for AI/ML             |
-| 25  | Historical Data | MEDIUM   | Save stats to file               |
-| 26  | CSV Export      | MEDIUM   | Download stats as spreadsheet    |
-| 27  | Custom Alerts   | MEDIUM   | User sets own thresholds         |
-| 28  | Disk I/O        | LOW      | Read/write speeds                |
-| 29  | Network Speed   | LOW      | Current upload/download speed    |
+| #   | Feature         | Priority | Description                   |
+| --- | --------------- | -------- | ----------------------------- |
+| 29  | VRAM Monitoring | HIGH     | GPU memory for AI/ML          |
+| 30  | CSV Export      | MEDIUM   | Download stats as spreadsheet |
+| 31  | Custom Alerts   | MEDIUM   | User sets own thresholds      |
+| 32  | Disk I/O        | LOW      | Read/write speeds             |
+| 33  | Network Speed   | LOW      | Current upload/download speed |
 
 ---
 
-### PHASE 3 - Remote Control (v1.4)
+### PHASE 3 - Remote Control (v1.6)
 
-| #   | Feature         | Priority | Description              |
-| --- | --------------- | -------- | ------------------------ |
-| 30  | File Browser    | HIGH     | View/manage files        |
-| 31  | Terminal        | HIGH     | Run commands remotely    |
-| 32  | Process Details | MEDIUM   | More info per process    |
-| 33  | Custom Kill     | MEDIUM   | Kill any process by name |
-| 34  | Services List   | LOW      | Windows services status  |
-| 35  | Startup Apps    | LOW      | Manage startup programs  |
+| #   | Feature         | Priority | Description             |
+| --- | --------------- | -------- | ----------------------- |
+| 34  | File Browser    | HIGH     | View/manage files       |
+| 35  | Terminal        | HIGH     | Run commands remotely   |
+| 36  | Process Details | MEDIUM   | More info per process   |
+| 37  | Startup Apps    | LOW      | Manage startup programs |
 
 ---
 
-### PHASE 4 - Multi-PC (v1.5)
+### PHASE 4 - Multi-PC (v1.7)
 
 | #   | Feature            | Priority | Description          |
 | --- | ------------------ | -------- | -------------------- |
-| 36  | Add Multiple PCs   | HIGH     | Control 2+ PCs       |
-| 37  | PC Groups          | MEDIUM   | Organize by location |
-| 38  | Unified Dashboard  | HIGH     | All PCs in one view  |
-| 39  | PC Status Overview | MEDIUM   | Quick status all PCs |
+| 38  | Add Multiple PCs   | HIGH     | Control 2+ PCs       |
+| 39  | PC Groups          | MEDIUM   | Organize by location |
+| 40  | Unified Dashboard  | HIGH     | All PCs in one view  |
+| 41  | PC Status Overview | MEDIUM   | Quick status all PCs |
 
 ---
 

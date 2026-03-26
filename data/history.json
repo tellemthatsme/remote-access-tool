@@ -1,0 +1,282 @@
+[
+  {
+    "timestamp": 1774532158177,
+    "cpu": 60,
+    "ram": 84,
+    "memUsed": "26.7",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532218186,
+    "cpu": 60,
+    "ram": 82,
+    "memUsed": "26.0",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532278190,
+    "cpu": 60,
+    "ram": 84,
+    "memUsed": "26.6",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532338225,
+    "cpu": 60,
+    "ram": 79,
+    "memUsed": "25.2",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532398222,
+    "cpu": 60,
+    "ram": 80,
+    "memUsed": "25.3",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532458224,
+    "cpu": 60,
+    "ram": 79,
+    "memUsed": "25.1",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532518246,
+    "cpu": 60,
+    "ram": 82,
+    "memUsed": "26.0",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532578350,
+    "cpu": 60,
+    "ram": 84,
+    "memUsed": "26.8",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532638267,
+    "cpu": 60,
+    "ram": 82,
+    "memUsed": "26.1",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532698377,
+    "cpu": 60,
+    "ram": 80,
+    "memUsed": "25.5",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532758268,
+    "cpu": 60,
+    "ram": 79,
+    "memUsed": "25.3",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532818407,
+    "cpu": 60,
+    "ram": 83,
+    "memUsed": "26.2",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532878289,
+    "cpu": 60,
+    "ram": 79,
+    "memUsed": "25.2",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532938319,
+    "cpu": 60,
+    "ram": 80,
+    "memUsed": "25.3",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774532998319,
+    "cpu": 60,
+    "ram": 77,
+    "memUsed": "24.5",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533058312,
+    "cpu": 60,
+    "ram": 74,
+    "memUsed": "23.5",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533119037,
+    "cpu": 60,
+    "ram": 76,
+    "memUsed": "24.1",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533178344,
+    "cpu": 60,
+    "ram": 78,
+    "memUsed": "24.6",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533238344,
+    "cpu": 60,
+    "ram": 80,
+    "memUsed": "25.4",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533298344,
+    "cpu": 60,
+    "ram": 75,
+    "memUsed": "23.7",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533358345,
+    "cpu": 60,
+    "ram": 79,
+    "memUsed": "25.0",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533418348,
+    "cpu": 60,
+    "ram": 76,
+    "memUsed": "24.1",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533478644,
+    "cpu": 60,
+    "ram": 78,
+    "memUsed": "24.9",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533538367,
+    "cpu": 60,
+    "ram": 78,
+    "memUsed": "24.9",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533598431,
+    "cpu": 60,
+    "ram": 74,
+    "memUsed": "23.5",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533658375,
+    "cpu": 60,
+    "ram": 76,
+    "memUsed": "24.3",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533718384,
+    "cpu": 60,
+    "ram": 76,
+    "memUsed": "24.2",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533778396,
+    "cpu": 60,
+    "ram": 78,
+    "memUsed": "24.9",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533838402,
+    "cpu": 60,
+    "ram": 77,
+    "memUsed": "24.5",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533898419,
+    "cpu": 60,
+    "ram": 74,
+    "memUsed": "23.4",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774533958499,
+    "cpu": 60,
+    "ram": 77,
+    "memUsed": "24.6",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774534018464,
+    "cpu": 60,
+    "ram": 81,
+    "memUsed": "25.7",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774534078436,
+    "cpu": 60,
+    "ram": 78,
+    "memUsed": "24.9",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774534138436,
+    "cpu": 60,
+    "ram": 82,
+    "memUsed": "26.0",
+    "memTotal": "31.8",
+    "gpu": null
+  },
+  {
+    "timestamp": 1774534198999,
+    "cpu": 60,
+    "ram": 71,
+    "memUsed": "22.5",
+    "memTotal": "31.8",
+    "gpu": null
+  }
+]

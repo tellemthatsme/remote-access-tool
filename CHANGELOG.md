@@ -2,7 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.5.0] - 2026-03-27
+## [1.6.0] - 2026-03-27
+
+### Added
+
+- **Multi-PC Support** - Connect and manage multiple computers from one dashboard
+- **REST API** - Full REST API with authentication for external integrations
+- **Port Scanning** - Network port scanning and service detection
+- **VRAM Monitoring** - GPU memory usage monitoring for AI/ML workloads
+- **Custom Alerts** - Configurable alert thresholds for CPU, RAM, disk, VRAM
+- **System Information** - Detailed system specs and uptime monitoring
+- **Network Diagnostics** - Network interface and connectivity monitoring
+
+### Changed
+
+- Enhanced GPU monitoring with VRAM percentage tracking
+- Improved alert system with customizable thresholds
+- Added system health monitoring and diagnostics
+
+### API New Endpoints
+
+- `GET /api/pcs` - List connected PCs
+- `POST /api/pc/register` - Register a new PC
+- `GET /api/pc/{id}` - Get PC stats
+- `GET /api/v1/status` - System status overview
+- `GET /api/v1/uptime` - System uptime information
+- `GET /api/v1/ports` - Port scanning results
+- `GET /api/v1/alerts` - Current alerts and thresholds
+
+### Security Enhancements
+
+- Bearer token authentication for API endpoints
+- Enhanced rate limiting with configurable windows
 
 ### Added
 

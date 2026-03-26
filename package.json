@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
-  "version": "1.5.0",
-  "description": "Remote PC monitoring and control dashboard v1.5 - File Browser, Terminal, Docker Management, Rate Limiting",
+  "version": "1.6.0",
+  "description": "Remote PC monitoring and control dashboard v1.6 - Multi-PC Support, REST API, Port Scanning, Enhanced Monitoring",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",

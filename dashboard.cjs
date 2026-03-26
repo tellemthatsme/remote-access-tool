@@ -10,6 +10,11 @@ const PASSWORD = "karma123";
 const PC_NAME = "DESKTOP-KARMA";
 const USERS = [{ username: "admin", role: "admin" }];
 
+// Rate limiting
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const requestCounts = new Map();
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -410,6 +415,128 @@ const html = `<!DOCTYPE html>
     .user-role { color: var(--accent-purple); font-weight: 500; }
     .user-remove { color: var(--accent-red); cursor: pointer; font-size: 16px; }
 
+    /* File Browser */
+    .file-browser { display: flex; flex-direction: column; gap: 16px; }
+    .file-path { display: flex; gap: 8px; align-items: center; }
+    .btn-file {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      color: var(--accent-cyan);
+      border: 1px solid var(--glass-border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: var(--shadow-soft);
+    }
+    .btn-file:hover {
+      transform: translateY(-2px);
+      background: var(--bg-elevated);
+    }
+    .file-list {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-soft);
+    }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .file-item:hover { background: var(--bg-elevated); }
+    .file-item.dir { color: var(--accent-blue); }
+    .file-item.file { color: var(--text-secondary); }
+    .file-info { font-size: 12px; color: var(--text-muted); }
+
+    /* Terminal */
+    .terminal { font-family: 'JetBrains Mono', monospace; }
+    .terminal-output {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .terminal-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .terminal-prompt { color: var(--accent-green); font-weight: bold; }
+    .terminal-input input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* Docker */
+    .docker-controls { margin-bottom: 16px; }
+    .docker-list {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-soft);
+    }
+    .docker-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .docker-info { flex: 1; }
+    .docker-name { font-weight: 600; color: var(--text-primary); }
+    .docker-status {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .docker-status.running { background: var(--accent-green); color: #000; }
+    .docker-status.exited { background: var(--accent-red); color: #fff; }
+    .docker-actions { display: flex; gap: 8px; }
+    .docker-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .docker-btn.start { background: var(--accent-green); color: #000; }
+    .docker-btn.stop { background: var(--accent-red); color: #fff; }
+    .docker-btn.restart { background: var(--accent-orange); color: #000; }
+
     /* Log */
     .log { 
       font-family: 'JetBrains Mono', monospace; font-size: 12px; 
@@ -466,6 +593,9 @@ const html = `<!DOCTYPE html>
       <div class="header-actions">
         <button class="export-btn" onclick="exportCSV()">📊 Export History (CSV)</button>
         <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        <button class="theme-toggle" onclick="toggleFileBrowser()">📁 Files</button>
+        <button class="theme-toggle" onclick="toggleTerminal()">💻 Terminal</button>
+        <button class="theme-toggle" onclick="toggleDocker()">🐳 Docker</button>
       </div>
     </div>
     
@@ -561,13 +691,48 @@ const html = `<!DOCTYPE html>
       </div>
     </div>
 
+    <div class="section" id="fileBrowserSection" style="display:none;">
+      <div class="section-title">📁 File Browser</div>
+      <div class="file-browser">
+        <div class="file-path">
+          <button onclick="goToParent()" class="btn-file">⬆️ Up</button>
+          <input type="text" id="currentPath" value="C:\" readonly style="flex:1; margin:0 12px; padding:8px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:8px; color:var(--text-primary);">
+          <button onclick="refreshFiles()" class="btn-file">🔄 Refresh</button>
+        </div>
+        <div class="file-list" id="fileList">
+          <div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading files...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="terminalSection" style="display:none;">
+      <div class="section-title">💻 Terminal</div>
+      <div class="terminal">
+        <div class="terminal-output" id="terminalOutput"></div>
+        <div class="terminal-input">
+          <span class="terminal-prompt">C:\></span>
+          <input type="text" id="terminalCommand" placeholder="Enter command (ls, dir, ipconfig, etc.)" onkeypress="handleTerminalKey(event)">
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="dockerSection" style="display:none;">
+      <div class="section-title">🐳 Docker Containers</div>
+      <div class="docker-controls">
+        <button class="btn-docker" onclick="fetchDockerContainers()">🔄 Refresh</button>
+      </div>
+      <div class="docker-list" id="dockerList">
+        <div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading containers...</div>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-title">📝 Activity Log</div>
       <div class="log" id="log"></div>
     </div>
     
     <div class="footer">
-      <p>Built after 14 months of learning to code • RemotePC v1.4</p>
+      <p>Built after 14 months of learning to code • RemotePC v1.5</p>
     </div>
   </div>
 
@@ -794,6 +959,38 @@ const html = `<!DOCTYPE html>
       document.getElementById('themeBtn').textContent = newTheme === 'light' ? '☀️' : '🌙';
       log('🎨 Theme switched to ' + newTheme);
     }
+
+    function toggleFileBrowser() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('fileBrowserSection');
+      if (section.style.display === 'block') {
+        section.style.display = 'none';
+      } else {
+        fetchFiles();
+      }
+      log('📁 File browser ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
+
+    function toggleTerminal() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('terminalSection');
+      section.style.display = section.style.display === 'block' ? 'none' : 'block';
+      if (section.style.display === 'block') {
+        document.getElementById('terminalCommand').focus();
+      }
+      log('💻 Terminal ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
+
+    function toggleDocker() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('dockerSection');
+      if (section.style.display === 'block') {
+        section.style.display = 'none';
+      } else {
+        fetchDockerContainers();
+      }
+      log('🐳 Docker ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
     
     async function fetchUsers() {
       try {
@@ -839,6 +1036,136 @@ const html = `<!DOCTYPE html>
       } catch(e) { log('Error: ' + e.message); }
     }
 
+    // File Browser
+    let currentPath = "C:\\";
+    async function fetchFiles(dir = currentPath) {
+      try {
+        const res = await fetch('/api/files?dir=' + encodeURIComponent(dir));
+        const data = await res.json();
+        renderFiles(data);
+        document.getElementById('currentPath').value = dir;
+        currentPath = dir;
+        document.getElementById('fileBrowserSection').style.display = 'block';
+      } catch(e) {
+        log('Error loading files: ' + e.message);
+      }
+    }
+
+    function renderFiles(files) {
+      const el = document.getElementById('fileList');
+      el.innerHTML = files.map(f =>
+        '<div class="file-item ' + (f.isDirectory ? 'dir' : 'file') + '" onclick="' + (f.isDirectory ? 'navigateTo(\'' + f.path.replace(/\\/g, '\\\\') + '\')' : 'log(\'File: ' + f.name + '\')') + '">' +
+        '<span>' + (f.isDirectory ? '📁' : '📄') + ' ' + f.name + '</span>' +
+        '<span class="file-info">' + (f.isDirectory ? '' : formatFileSize(f.size)) + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    function navigateTo(path) {
+      fetchFiles(path);
+    }
+
+    function goToParent() {
+      const parent = path.dirname(currentPath);
+      if (parent !== currentPath) {
+        fetchFiles(parent);
+      }
+    }
+
+    function refreshFiles() {
+      fetchFiles(currentPath);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // Terminal
+    async function executeCommand(cmd) {
+      if (!cmd.trim()) return;
+      try {
+        const res = await fetch('/api/exec', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ command: cmd })
+        });
+        const data = await res.json();
+        const outputEl = document.getElementById('terminalOutput');
+        outputEl.innerHTML += '<div><span style="color:var(--accent-green)">C:\\></span> ' + cmd + '</div>';
+        outputEl.innerHTML += '<div style="color:var(--text-secondary)">' + (data.output || data.error || 'Command executed') + '</div>';
+        outputEl.scrollTop = outputEl.scrollHeight;
+        document.getElementById('terminalCommand').value = '';
+      } catch(e) {
+        log('Terminal error: ' + e.message);
+      }
+    }
+
+    function handleTerminalKey(e) {
+      if (e.key === 'Enter') {
+        executeCommand(document.getElementById('terminalCommand').value);
+      }
+    }
+
+    // Docker
+    async function fetchDockerContainers() {
+      try {
+        const res = await fetch('/api/docker/containers');
+        const containers = await res.json();
+        renderDockerContainers(containers);
+        document.getElementById('dockerSection').style.display = 'block';
+      } catch(e) {
+        log('Docker not available: ' + e.message);
+      }
+    }
+
+    function renderDockerContainers(containers) {
+      const el = document.getElementById('dockerList');
+      if (!containers || containers.length === 0) {
+        el.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No containers found or Docker not running</div>';
+        return;
+      }
+      el.innerHTML = containers.map(c =>
+        '<div class="docker-item">' +
+        '<div class="docker-info">' +
+        '<div class="docker-name">' + (c.Names || c.names || 'Unknown') + '</div>' +
+        '<div class="docker-status ' + (c.Status && c.Status.includes('Up') ? 'running' : 'exited') + '">' +
+        (c.Status || 'Unknown') + '</div>' +
+        '</div>' +
+        '<div class="docker-actions">' +
+        (c.Status && c.Status.includes('Up') ?
+          '<button class="docker-btn stop" onclick="dockerAction(\'' + c.Id + '\', \'stop\')">Stop</button>' +
+          '<button class="docker-btn restart" onclick="dockerAction(\'' + c.Id + '\', \'restart\')">Restart</button>'
+          :
+          '<button class="docker-btn start" onclick="dockerAction(\'' + c.Id + '\', \'start\')">Start</button>'
+        ) +
+        '</div>' +
+        '</div>'
+      ).join('');
+    }
+
+    async function dockerAction(containerId, action) {
+      try {
+        const res = await fetch('/api/docker/action', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action, containerId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          log('🐳 Container ' + action + ' successful');
+          setTimeout(fetchDockerContainers, 1000);
+        } else {
+          log('🐳 Container ' + action + ' failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch(e) {
+        log('🐳 Docker error: ' + e.message);
+      }
+    }
+
     setInterval(fetchStats, 2000);
     setInterval(fetchDisk, 15000);
     setInterval(fetchProcesses, 5000);
@@ -847,6 +1174,36 @@ const html = `<!DOCTYPE html>
   </script>
 </body>
 </html>`;
+
+// =============== RATE LIMITING ===============
+function checkRateLimit(clientIP) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+
+  if (!requestCounts.has(clientIP)) {
+    requestCounts.set(clientIP, []);
+  }
+
+  const requests = requestCounts.get(clientIP);
+  const validRequests = requests.filter((time) => time > windowStart);
+  requestCounts.set(clientIP, validRequests);
+
+  if (validRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  validRequests.push(now);
+  return true;
+}
+
+function getClientIP(req) {
+  return (
+    req.headers["x-forwarded-for"] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    "unknown"
+  );
+}
 
 // =============== HISTORY DATA ===============
 const HISTORY_FILE = path.join(__dirname, "data", "history.json");
@@ -1092,6 +1449,17 @@ const server = http.createServer((req, res) => {
     res.end();
     return;
   }
+
+  // Rate limiting
+  const clientIP = getClientIP(req);
+  if (!checkRateLimit(clientIP)) {
+    res.writeHead(429, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({ error: "Too many requests. Please try again later." }),
+    );
+    return;
+  }
+
   if (req.url === "/ws") {
     res.writeHead(101, { Upgrade: "websocket" });
     return;
@@ -1171,6 +1539,83 @@ const server = http.createServer((req, res) => {
     if (index > -1) USERS.splice(index, 1);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: true }));
+    return;
+  }
+  if (req.url.startsWith("/api/files")) {
+    const urlParts = req.url.split("?");
+    const dir = urlParts.length > 1 ? urlParts[1].split("=")[1] : "C:\\";
+    try {
+      const items = fs.readdirSync(decodeURIComponent(dir)).map((item) => {
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+        return {
+          name: item,
+          path: fullPath,
+          isDirectory: stats.isDirectory(),
+          size: stats.size,
+          modified: stats.mtime.toISOString(),
+        };
+      });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(items));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+  if (req.url === "/api/docker/containers") {
+    try {
+      const output = execSync("docker ps -a --format json", {
+        encoding: "utf8",
+      });
+      const containers = output
+        .trim()
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return null;
+          }
+        })
+        .filter((c) => c);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(containers));
+    } catch (e) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify([]));
+    }
+    return;
+  }
+  if (req.url.startsWith("/api/docker/") && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { action, containerId } = JSON.parse(body);
+        let cmd = "";
+        if (action === "start") cmd = "docker start " + containerId;
+        else if (action === "stop") cmd = "docker stop " + containerId;
+        else if (action === "restart") cmd = "docker restart " + containerId;
+        else throw new Error("Invalid action");
+
+        exec(cmd, (err, stdout, stderr) => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              success: !err,
+              output: stdout || stderr,
+              error: err ? err.message : null,
+            }),
+          );
+        });
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
 
@@ -1299,7 +1744,7 @@ setInterval(() => {
 
 server.listen(PORT, () => {
   console.log("═══════════════════════════════════════════");
-  console.log("   RemotePC Dashboard v1.4 - Glass UI");
+  console.log("   RemotePC Dashboard v1.5 - File Browser");
   console.log("═══════════════════════════════════════════");
   console.log("URL:      http://localhost:" + PORT);
   console.log("Password: " + PASSWORD);
@@ -1314,5 +1759,9 @@ server.listen(PORT, () => {
   console.log("  • CSV History Export");
   console.log("  • Light/Dark Theme Toggle");
   console.log("  • User Management with Roles");
+  console.log("  • File Browser & Navigation");
+  console.log("  • Terminal Command Execution");
+  console.log("  • Docker Container Management");
+  console.log("  • Rate Limiting Security");
   console.log("═══════════════════════════════════════════");
 });

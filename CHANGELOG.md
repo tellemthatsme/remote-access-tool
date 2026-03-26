@@ -2,15 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-03-27
+
+### Added
+
+- **File Browser** - Browse files and directories remotely with navigation
+- **Terminal Access** - Execute safe system commands through web interface
+- **Docker Management** - View and control Docker containers (start/stop/restart)
+- **Rate Limiting** - Security protection against brute force attacks (100 req/15min)
+- **Enhanced Security** - Request throttling and IP-based rate limiting
+
+### Changed
+
+- Improved security with comprehensive rate limiting
+- Added file system navigation capabilities
+- Extended Docker integration for container management
+- Enhanced terminal with real-time command execution
+
+### API New Endpoints
+
+- `GET /api/files?dir=path` - Browse directory contents
+- `GET /api/docker/containers` - List Docker containers
+- `POST /api/docker/action` - Control Docker containers (start/stop/restart)
+
+### Security Enhancements
+
+- Rate limiting implemented (429 responses for abuse)
+- IP-based request tracking and throttling
+- Enhanced API security validation
+
 ## [1.4.0] - 2026-03-27
 
 ### Added
 
-- **Glassmorphism UI** - Modern frosted glass design with backdrop blur
-- **CSV Export** - Export historical data to CSV file
-- **Light/Dark Theme Toggle** - Switch between themes dynamically
+- **Glassmorphism UI** - Frosted glass effects with backdrop blur
+- **CSV Export** - Download historical data as CSV file
+- **Light/Dark Theme Toggle** - Dynamic theme switching with smooth transitions
 - **User Management** - Add/remove users with role-based access (Admin/Viewer)
-- **Enhanced Animations** - Smooth slide-in animations and micro-interactions
+- **Enhanced Animations** - Smooth slide-in effects and micro-interactions
 
 ### Changed
 

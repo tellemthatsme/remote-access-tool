@@ -2,7 +2,7 @@
 
 RemotePC is a web-based dashboard for monitoring and controlling a Windows PC remotely. Built after 14 months of learning to code as a free alternative to TeamViewer.
 
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 **License:** MIT  
 **Demo:** https://remote-pc.example.com
 
@@ -35,17 +35,21 @@ RemotePC is a web-based dashboard for monitoring and controlling a Windows PC re
 - **Restart PC** - Remote restart with countdown
 - **Shutdown PC** - Remote shutdown
 - **CSV Export** - Export history data to CSV
+- **File Browser** - Browse files and directories
+- **Terminal** - Execute system commands safely
 
 ### 🔧 System Info
 
 - **Windows Services** - View running/stopped services
 - **User Management** - Add/remove users with roles
+- **Docker Containers** - View and control containers
 - **Uptime** - Days, hours, minutes
 - **Historical Data** - 30 days of stats saved to file
 
 ### 🔐 Security
 
 - **Password Protected** - Login required
+- **Rate Limiting** - Protection against brute force (100 req/15min)
 - **Cloudflare Tunnel** - No port forwarding needed
 - **HTTPS** - Secure connection
 

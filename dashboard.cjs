@@ -2517,6 +2517,62 @@ function initDatabase() {
     )
   `);
 
+  // Teams table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS teams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      owner_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (owner_id) REFERENCES users(id)
+    )
+  `);
+
+  // Team members table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS team_members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team_id INTEGER,
+      user_id INTEGER,
+      role TEXT DEFAULT 'member',
+      joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (team_id) REFERENCES teams(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  // Scheduled tasks table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scheduled_tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      pc_id INTEGER,
+      name TEXT NOT NULL,
+      action TEXT NOT NULL,
+      schedule TEXT NOT NULL,
+      enabled BOOLEAN DEFAULT 1,
+      last_run DATETIME,
+      next_run DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (pc_id) REFERENCES pcs(id)
+    )
+  `);
+
+  // Integrations table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS integrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      config TEXT,
+      enabled BOOLEAN DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
   // Analytics table
   db.exec(`
     CREATE TABLE IF NOT EXISTS analytics (
@@ -2626,6 +2682,57 @@ const dbQueries = {
 
   getUserWebhooks: db.prepare(`
     SELECT * FROM webhooks WHERE user_id = ? AND active = 1
+  `),
+
+  // Team queries
+  createTeam: db.prepare(`
+    INSERT INTO teams (name, owner_id)
+    VALUES (?, ?)
+  `),
+
+  getUserTeams: db.prepare(`
+    SELECT t.*, tm.role FROM teams t
+    LEFT JOIN team_members tm ON t.id = tm.team_id AND tm.user_id = ?
+    WHERE t.owner_id = ? OR tm.user_id = ?
+  `),
+
+  addTeamMember: db.prepare(`
+    INSERT INTO team_members (team_id, user_id, role)
+    VALUES (?, ?, ?)
+  `),
+
+  getTeamMembers: db.prepare(`
+    SELECT tm.*, u.username, u.email FROM team_members tm
+    JOIN users u ON tm.user_id = u.id
+    WHERE tm.team_id = ?
+  `),
+
+  // Scheduled tasks queries
+  createScheduledTask: db.prepare(`
+    INSERT INTO scheduled_tasks (user_id, pc_id, name, action, schedule, next_run)
+    VALUES (?, ?, ?, ?, ?, datetime('now', ?))
+  `),
+
+  getUserScheduledTasks: db.prepare(`
+    SELECT * FROM scheduled_tasks WHERE user_id = ? ORDER BY next_run
+  `),
+
+  updateTaskLastRun: db.prepare(`
+    UPDATE scheduled_tasks SET last_run = CURRENT_TIMESTAMP WHERE id = ?
+  `),
+
+  // Integration queries
+  createIntegration: db.prepare(`
+    INSERT INTO integrations (user_id, type, name, config)
+    VALUES (?, ?, ?, ?)
+  `),
+
+  getUserIntegrations: db.prepare(`
+    SELECT * FROM integrations WHERE user_id = ? AND enabled = 1
+  `),
+
+  updateIntegration: db.prepare(`
+    UPDATE integrations SET config = ?, enabled = ? WHERE id = ? AND user_id = ?
   `)
 };
 
@@ -3721,6 +3828,170 @@ const server = http.createServer((req, res) => {
       const webhooks = dbQueries.getUserWebhooks.all(req.user.userId);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ webhooks: webhooks.map(w => ({ ...w, events: JSON.parse(w.events) })) }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // Teams API
+  if (req.url === "/api/v1/teams" && req.method === "GET") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const teams = dbQueries.getUserTeams.all(req.user.userId, req.user.userId, req.user.userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ teams }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/v1/teams" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { name } = JSON.parse(body);
+        const result = dbQueries.createTeam.run(name, req.user.userId);
+        const team = { id: result.lastInsertRowid, name, owner_id: req.user.userId };
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ team }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url.startsWith("/api/v1/teams/") && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    const teamId = req.url.split('/')[4];
+    const action = req.url.split('/')[5];
+
+    if (action === 'members') {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
+        try {
+          const { username, role } = JSON.parse(body);
+          const user = dbQueries.getUserByUsername.get(username);
+          if (!user) throw new Error('User not found');
+
+          dbQueries.addTeamMember.run(teamId, user.id, role || 'member');
+          res.writeHead(201, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+    }
+    return;
+  }
+
+  // Scheduled Tasks API
+  if (req.url === "/api/v1/tasks" && req.method === "GET") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const tasks = dbQueries.getUserScheduledTasks.all(req.user.userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ tasks }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/v1/tasks" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { pcId, name, action, schedule } = JSON.parse(body);
+        const result = dbQueries.createScheduledTask.run(
+          req.user.userId,
+          pcId,
+          name,
+          action,
+          schedule,
+          schedule // This would need proper cron parsing
+        );
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ taskId: result.lastInsertRowid }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // Integrations API
+  if (req.url === "/api/v1/integrations" && req.method === "GET") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const integrations = dbQueries.getUserIntegrations.all(req.user.userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ integrations: integrations.map(i => ({ ...i, config: JSON.parse(i.config) })) }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/v1/integrations" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { type, name, config } = JSON.parse(body);
+        const result = dbQueries.createIntegration.run(
+          req.user.userId,
+          type,
+          name,
+          JSON.stringify(config)
+        );
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ integrationId: result.lastInsertRowid }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // Slack Integration Webhook
+  if (req.url === "/api/integrations/slack/webhook" && req.method === "POST") {
+    try {
+      const integration = dbQueries.getUserIntegrations.all().find(i =>
+        JSON.parse(i.config).webhookUrl && req.url.includes(JSON.parse(i.config).webhookUrl.split('/').pop())
+      );
+
+      if (integration) {
+        const config = JSON.parse(integration.config);
+        // Process Slack webhook
+        triggerWebhook('slack.message', { body: req.body, config });
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
     } catch (e) {
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: e.message }));

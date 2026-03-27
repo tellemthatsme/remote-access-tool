@@ -11,20 +11,45 @@
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0f"
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#00d4aa"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.remotepc.mobile"
+      "bundleIdentifier": "com.remotepc.mobile",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch", "remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a0f"
       },
-      "package": "com.remotepc.mobile"
+      "package": "com.remotepc.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#00d4aa",
+          "defaultChannel": "default"
+        }
+      ]
+    ]
   }
 }

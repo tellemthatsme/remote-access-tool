@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
-  "version": "1.8.0",
-  "description": "Remote PC monitoring and control platform v1.8 - File Transfer, Google Drive Backup, Admin Dashboard, Complete SaaS",
+  "version": "1.9.0",
+  "description": "Remote PC monitoring and control platform v1.9 - Teams, Integrations, Scheduled Tasks, Complete Enterprise Suite",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",

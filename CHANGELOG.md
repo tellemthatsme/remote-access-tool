@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-03-28
+
+### Added
+
+- **Team Collaboration** - Create teams, invite members, share PC access with role permissions
+- **Third-Party Integrations** - Slack, Discord, Zapier webhooks for notifications and automation
+- **Scheduled Tasks** - Cron-like automation for PC management (restart, shutdown, etc.)
+- **Advanced Mobile Features** - Push notifications, offline mode, biometric authentication
+- **Integration API** - REST endpoints for Slack, Discord, and webhook management
+- **Team Management UI** - Create, manage, and collaborate on teams
+- **Automated Task Scheduling** - Set up recurring tasks for PC maintenance
+- **Enhanced Mobile Navigation** - Bottom tabs with Teams and Integrations screens
+
+### Enhanced Mobile App
+
+- **Complete UI Overhaul** - Bottom tab navigation with 5 main screens
+- **Authentication System** - JWT-based login with persistent sessions
+- **Push Notifications** - Real-time alerts and system notifications
+- **Offline Capabilities** - Basic functionality without internet
+- **Team Collaboration** - Invite members, manage permissions, shared PCs
+- **Integration Management** - Connect Slack, Discord, Zapier from mobile
+- **File Transfer** - Upload/download files between mobile and PC
+- **Settings Management** - App preferences, notifications, dark mode
+
+### Enterprise Features
+
+- **Multi-User Teams** - Create teams with member management and permissions
+- **Role-Based Access** - Owner, admin, and member roles with different permissions
+- **Shared PC Access** - Teams can access and manage shared computers
+- **Integration Marketplace** - Pre-built integrations for popular services
+- **Advanced Scheduling** - Automated tasks with cron-like scheduling
+- **Audit Logging** - Track all user actions and system events
+
+### API Expansions
+
+- `POST /api/v1/teams` - Create new teams
+- `GET /api/v1/teams` - List user teams
+- `POST /api/v1/teams/{id}/members` - Invite team members
+- `POST /api/v1/tasks` - Create scheduled tasks
+- `GET /api/v1/tasks` - List scheduled tasks
+- `POST /api/v1/integrations` - Add third-party integrations
+- `GET /api/v1/integrations` - List user integrations
+- `POST /api/integrations/slack/webhook` - Slack webhook endpoint
+
+### Database Enhancements
+
+- **Teams Table** - Team management with ownership and membership
+- **Team Members Table** - User roles and permissions within teams
+- **Scheduled Tasks Table** - Automated task scheduling and execution
+- **Integrations Table** - Third-party service configurations
+- **Enhanced Analytics** - Team-based usage tracking and reporting
+
 ## [1.8.0] - 2026-03-28
 
 ### Added

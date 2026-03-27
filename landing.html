@@ -204,7 +204,158 @@
         color: var(--accent-purple);
       }
       .stat-value.proc {
+        color: var(--accent-purple);
+      }
+
+      /* Pricing */
+      .pricing-section {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .pricing-section h2 {
+        font-size: 36px;
+        margin-bottom: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--accent-green),
+          var(--accent-blue)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+      .pricing-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 40px 30px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s;
+        position: relative;
+      }
+      .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+      .pricing-card.featured {
+        border: 2px solid var(--accent-green);
+        transform: scale(1.05);
+      }
+      .pricing-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(
+          135deg,
+          var(--accent-green),
+          var(--accent-blue)
+        );
+        color: #000;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .pricing-header {
+        margin-bottom: 30px;
+      }
+      .pricing-header h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .pricing-price {
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--accent-green);
+      }
+      .pricing-price span {
+        font-size: 16px;
+        color: var(--text-secondary);
+      }
+      .pricing-features {
+        list-style: none;
+        margin: 30px 0;
+        text-align: left;
+      }
+      .pricing-features li {
+        margin-bottom: 12px;
+        color: var(--text-secondary);
+      }
+      .pricing-btn {
+        display: inline-block;
+        background: linear-gradient(
+          135deg,
+          var(--accent-green),
+          var(--accent-blue)
+        );
+        color: #000;
+        padding: 16px 32px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+      .pricing-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 212, 170, 0.3);
+      }
+      .pricing-btn.featured {
+        background: linear-gradient(
+          135deg,
+          var(--accent-blue),
+          var(--accent-purple)
+        );
+      }
+
+      /* Mobile Apps */
+      .mobile-apps {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .mobile-apps h2 {
+        font-size: 32px;
+        margin-bottom: 40px;
+      }
+      .app-previews {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .app-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 40px 30px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+      }
+      .app-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+      }
+      .app-card h3 {
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+      .app-card p {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+      }
+      .app-status {
+        background: var(--bg-secondary);
         color: var(--accent-blue);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-block;
       }
       .stat-label {
         font-size: 12px;
@@ -337,21 +488,54 @@
         margin-bottom: 32px;
       }
       .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        display: inline-block;
         background: linear-gradient(
           135deg,
           var(--accent-green),
           var(--accent-blue)
         );
         color: #000;
-        padding: 20px 48px;
-        border-radius: 50px;
-        font-size: 18px;
-        font-weight: 700;
+        padding: 20px 40px;
+        border-radius: 16px;
         text-decoration: none;
+        font-size: 18px;
+        font-weight: 600;
         transition: all 0.3s;
+        box-shadow: 0 20px 40px rgba(0, 212, 170, 0.3);
+      }
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 25px 50px rgba(0, 212, 170, 0.4);
+      }
+      .cta-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin: 30px 0;
+        flex-wrap: wrap;
+      }
+      .btn.secondary {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        box-shadow: none;
+      }
+      .btn.secondary:hover {
+        background: var(--bg-elevated);
+        transform: translateY(-2px);
+      }
+      .footer-links {
+        margin-top: 16px;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+      .footer-links a {
+        color: var(--accent-green);
+        text-decoration: none;
+        margin: 0 8px;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
       }
       .btn:hover {
         transform: translateY(-3px);
@@ -395,15 +579,18 @@
           The free alternative to TeamViewer. Monitor, control, and manage your
           PC from your phone or browser.
         </p>
-        <div class="price-tag">
-          $1/month <small>(or name your price)</small>
+        <div class="pricing-options">
+          <div class="price-tag">From $4.99/month</div>
+          <p style="color: var(--text-secondary); margin: 8px 0 24px">
+            Choose the plan that fits your needs
+          </p>
         </div>
         <div class="badges">
-          <span class="badge">🚀 No subscriptions</span>
-          <span class="badge">📱 Works on phone</span>
+          <span class="badge">🚀 Enterprise ready</span>
+          <span class="badge">📱 iOS/Android apps</span>
           <span class="badge">⚡ 5-minute setup</span>
           <span class="badge">🔒 Secure tunnel</span>
-          <span class="badge">💻 Open source ready</span>
+          <span class="badge">🏢 White label ready</span>
         </div>
       </header>
 
@@ -487,6 +674,79 @@
         </div>
       </div>
 
+      <div class="pricing-section">
+        <h2>Choose Your Plan</h2>
+        <div class="pricing-grid">
+          <div class="pricing-card basic">
+            <div class="pricing-header">
+              <h3>Basic</h3>
+              <div class="pricing-price">$4.99<span>/month</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✅ 1 PC monitoring</li>
+              <li>✅ Basic controls</li>
+              <li>✅ Real-time stats</li>
+              <li>✅ File browser</li>
+              <li>✅ Terminal access</li>
+            </ul>
+            <a href="#cta" class="pricing-btn">Get Started</a>
+          </div>
+          <div class="pricing-card pro featured">
+            <div class="pricing-badge">Most Popular</div>
+            <div class="pricing-header">
+              <h3>Professional</h3>
+              <div class="pricing-price">$9.99<span>/month</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✅ 5 PCs monitoring</li>
+              <li>✅ Advanced controls</li>
+              <li>✅ API access</li>
+              <li>✅ Webhooks</li>
+              <li>✅ Priority support</li>
+            </ul>
+            <a href="#cta" class="pricing-btn featured">Get Started</a>
+          </div>
+          <div class="pricing-card enterprise">
+            <div class="pricing-header">
+              <h3>Enterprise</h3>
+              <div class="pricing-price">$29.99<span>/month</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✅ Unlimited PCs</li>
+              <li>✅ White label branding</li>
+              <li>✅ Custom integrations</li>
+              <li>✅ SLA guarantees</li>
+              <li>✅ Phone support</li>
+            </ul>
+            <a href="#cta" class="pricing-btn">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-apps">
+        <h2>📱 Mobile Apps Coming Soon</h2>
+        <div class="app-previews">
+          <div class="app-card">
+            <div class="app-icon">📱</div>
+            <h3>iOS App</h3>
+            <p>
+              Native iOS experience with push notifications and biometric
+              authentication.
+            </p>
+            <div class="app-status">Coming Q1 2025</div>
+          </div>
+          <div class="app-card">
+            <div class="app-icon">🤖</div>
+            <h3>Android App</h3>
+            <p>
+              Material Design 3 interface with offline capabilities and quick
+              actions.
+            </p>
+            <div class="app-status">Coming Q1 2025</div>
+          </div>
+        </div>
+      </div>
+
       <div class="comparison">
         <h2>vs. The Competition</h2>
         <table class="comp-table">
@@ -521,6 +781,30 @@
             <td class="their">❌</td>
           </tr>
           <tr>
+            <td>Multi-PC Support</td>
+            <td class="our">✅ Up to 5</td>
+            <td class="their">❌</td>
+            <td class="their">❌</td>
+          </tr>
+          <tr>
+            <td>API Access</td>
+            <td class="our">✅ REST API</td>
+            <td class="their">❌</td>
+            <td class="their">❌</td>
+          </tr>
+          <tr>
+            <td>White Label</td>
+            <td class="our">✅ Enterprise</td>
+            <td class="their">❌</td>
+            <td class="their">❌</td>
+          </tr>
+          <tr>
+            <td>Mobile Apps</td>
+            <td class="our">✅ Coming Soon</td>
+            <td class="their">❌</td>
+            <td class="their">❌</td>
+          </tr>
+          <tr>
             <td>Self-Hosted</td>
             <td class="our">✅ Yes</td>
             <td class="their">❌</td>
@@ -539,24 +823,42 @@
         </div>
       </div>
 
-      <div class="cta">
+      <div class="cta" id="cta">
         <h2>Ready to Take Control?</h2>
-        <p>Join developers who are saving money and gaining control.</p>
-        <a href="https://www.buymeacoffee.com/YOUR_LINK_HERE" class="btn">
-          Get Started - $1/month →
-        </a>
+        <p>
+          Join 100+ developers who are saving money and gaining enterprise-grade
+          control.
+        </p>
+        <div class="cta-buttons">
+          <a
+            href="https://www.buymeacoffee.com/YOUR_LINK_HERE"
+            class="btn primary"
+          >
+            Start Free Trial →
+          </a>
+          <a href="#pricing-section" class="btn secondary"> View Pricing </a>
+        </div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 16px">
+          14-day free trial • Cancel anytime • Enterprise features included
+        </p>
       </div>
 
       <footer>
         <p>Built with 💚 after 14 months of learning to code</p>
         <p>
-          RemotePC v1.3 •
+          RemotePC v1.6 • Enterprise Edition •
           <a
             href="https://github.com/tellemthatsme/remote-access-tool"
             style="color: var(--accent-green)"
             >GitHub</a
           >
         </p>
+        <div class="footer-links">
+          <a href="#pricing-section">Pricing</a> •
+          <a href="mailto:support@remotepc.dev">Support</a> •
+          <a href="/api/v1/docs">API Docs</a> •
+          <a href="/privacy">Privacy</a>
+        </div>
       </footer>
     </div>
   </body>

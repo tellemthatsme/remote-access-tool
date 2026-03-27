@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
   "version": "1.6.0",
-  "description": "Remote PC monitoring and control dashboard v1.6 - Multi-PC Support, REST API, Port Scanning, Enhanced Monitoring",
+  "description": "Remote PC monitoring and control dashboard v1.6 - Enterprise Features, API, Webhooks, White Label, Mobile Ready",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",
@@ -15,7 +15,13 @@
     "websocket",
     "remote-management",
     "nodejs",
-    "automation"
+    "automation",
+    "enterprise",
+    "api",
+    "webhooks",
+    "white-label",
+    "multi-pc",
+    "mobile-app"
   ],
   "author": "Karma",
   "license": "MIT",

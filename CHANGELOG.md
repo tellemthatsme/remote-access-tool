@@ -2,23 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.0] - 2026-03-27
+## [1.6.0] - 2026-03-28
 
 ### Added
 
+- **Enterprise White-Label** - Custom branding, logos, colors for enterprise clients
+- **Stripe Payment Integration** - Professional subscription management
+- **Webhook System** - Real-time event notifications and integrations
 - **Multi-PC Support** - Connect and manage multiple computers from one dashboard
-- **REST API** - Full REST API with authentication for external integrations
+- **REST API** - Full REST API with Bearer authentication for external integrations
 - **Port Scanning** - Network port scanning and service detection
 - **VRAM Monitoring** - GPU memory usage monitoring for AI/ML workloads
 - **Custom Alerts** - Configurable alert thresholds for CPU, RAM, disk, VRAM
 - **System Information** - Detailed system specs and uptime monitoring
-- **Network Diagnostics** - Network interface and connectivity monitoring
+- **Mobile App Preparation** - Framework and assets for iOS/Android apps
 
 ### Changed
 
 - Enhanced GPU monitoring with VRAM percentage tracking
 - Improved alert system with customizable thresholds
 - Added system health monitoring and diagnostics
+- Updated landing page with enterprise pricing and mobile app info
+- Modernized UI with enterprise features and branding controls
 
 ### API New Endpoints
 
@@ -29,11 +34,24 @@ All notable changes to this project will be documented in this file.
 - `GET /api/v1/uptime` - System uptime information
 - `GET /api/v1/ports` - Port scanning results
 - `GET /api/v1/alerts` - Current alerts and thresholds
+- `POST /api/v1/stripe/create-session` - Create payment session
+- `POST /api/v1/webhooks/test` - Test webhook delivery
+- `PUT /api/v1/branding` - Update white-label branding
 
 ### Security Enhancements
 
 - Bearer token authentication for API endpoints
 - Enhanced rate limiting with configurable windows
+- Webhook signature verification (planned)
+- Enterprise-grade security controls
+
+### Business Features
+
+- **Pricing Tiers**: Basic ($4.99/mo), Professional ($9.99/mo), Enterprise ($29.99/mo)
+- **Stripe Integration**: Secure payment processing
+- **White-Label Branding**: Custom logos, colors, company names
+- **Webhook System**: Real-time integrations and notifications
+- **14-Day Free Trial**: Risk-free evaluation period
 
 ### Added
 

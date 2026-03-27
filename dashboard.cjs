@@ -10,16 +10,33 @@ const PASSWORD = "karma123";
 const PC_NAME = "DESKTOP-KARMA";
 const USERS = [{ username: "admin", role: "admin" }];
 
-// Multi-PC Support
-const CONNECTED_PCS = new Map(); // Store connected PCs
-const PC_SESSIONS = new Map(); // Store active sessions
-
-// Custom Alerts
-const CUSTOM_ALERTS = [
-  { type: 'cpu', threshold: 80, enabled: true },
-  { type: 'ram', threshold: 85, enabled: true },
-  { type: 'disk', threshold: 90, enabled: true }
-];
+// Enterprise Configuration
+const ENTERPRISE_CONFIG = {
+  branding: {
+    companyName: "RemotePC",
+    logo: "🖥️",
+    primaryColor: "#00d4aa",
+    secondaryColor: "#4f8cff",
+    customCSS: "",
+    whiteLabel: false
+  },
+  payments: {
+    stripeEnabled: false,
+    stripePublishableKey: "",
+    stripeSecretKey: "",
+    plans: {
+      basic: { price: 4.99, features: ["1 PC", "Basic monitoring"] },
+      pro: { price: 9.99, features: ["5 PCs", "Advanced monitoring", "API access"] },
+      enterprise: { price: 29.99, features: ["Unlimited PCs", "White-label", "Priority support"] }
+    }
+  },
+  api: {
+    webhooksEnabled: true,
+    webhookSecret: "remotepc-webhook-secret-2024",
+    rateLimit: 1000, // requests per hour for enterprise
+    corsOrigins: ["*"]
+  }
+};
 
 // Rate limiting
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
@@ -58,6 +75,10 @@ const html = `<!DOCTYPE html>
       --shadow-glow: 0 0 60px rgba(0,212,170,0.3);
       --glass-bg: rgba(26, 26, 36, 0.4);
       --glass-border: rgba(255,255,255,0.1);
+      /* Enterprise Branding Variables */
+      --brand-primary: var(--accent-green);
+      --brand-secondary: var(--accent-blue);
+      --brand-gradient: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
     }
     [data-theme="light"] {
       --bg-primary: #f8fafc;
@@ -663,6 +684,46 @@ const html = `<!DOCTYPE html>
     .system-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
     .system-value { font-weight: 600; color: var(--text-primary); }
 
+    /* Enterprise */
+    .enterprise-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    .tab-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .tab-btn.active, .tab-btn:hover { background: var(--accent-blue); color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .branding-form, .payments-setup, .webhooks-setup, .api-docs {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow-soft);
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); }
+    .form-group input[type="text"], .form-group input[type="password"], .form-group input[type="number"] {
+      width: 100%; padding: 10px; border: 1px solid var(--border-color);
+      border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);
+    }
+    .form-group input[type="color"] { width: 60px; height: 40px; border: none; border-radius: 8px; }
+    .api-endpoint { background: var(--bg-secondary); padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid var(--accent-green); }
+    .api-keys { background: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-top: 16px; }
+    .api-keys code { background: var(--bg-primary); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+    .webhook-events { margin-top: 20px; max-height: 200px; overflow-y: auto; }
+    .webhook-event { background: var(--bg-secondary); padding: 10px; margin: 4px 0; border-radius: 6px; font-size: 12px; }
+    .pricing-plans { margin-top: 20px; }
+    .pricing-plan { background: var(--bg-secondary); padding: 16px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border-color); }
+    .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .plan-price { font-size: 20px; font-weight: 700; color: var(--accent-green); }
+    .plan-features { font-size: 12px; color: var(--text-muted); }
+
     /* Log */
     .log { 
       font-family: 'JetBrains Mono', monospace; font-size: 12px; 
@@ -734,6 +795,7 @@ const html = `<!DOCTYPE html>
         <button class="theme-toggle" onclick="togglePCs()">🖥️ PCs</button>
         <button class="theme-toggle" onclick="toggleNetwork()">🌐 Network</button>
         <button class="theme-toggle" onclick="toggleSystem()">💻 System</button>
+        <button class="theme-toggle" onclick="toggleEnterprise()">🏢 Enterprise</button>
       </div>
     </div>
     
@@ -891,10 +953,112 @@ const html = `<!DOCTYPE html>
     </div>
 
     <div class="section" id="systemSection" style="display:none;">
-      <div class="section-title">🖥️ System Information</div>
+      <div class="section-title">💻 System Information</div>
       <div class="system-info" id="systemInfo">
         <div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading system info...</div>
       </div>
+    </div>
+
+    <div class="section" id="enterpriseSection" style="display:none;">
+      <div class="section-title">🏢 Enterprise Features</div>
+      <div class="enterprise-tabs">
+        <button class="tab-btn active" onclick="showEnterpriseTab('branding')">🎨 Branding</button>
+        <button class="tab-btn" onclick="showEnterpriseTab('payments')">💳 Payments</button>
+        <button class="tab-btn" onclick="showEnterpriseTab('webhooks')">🔗 Webhooks</button>
+        <button class="tab-btn" onclick="showEnterpriseTab('api')">🔌 API</button>
+      </div>
+      <div id="enterpriseContent">
+        <div id="brandingTab" class="tab-content active">
+          <div class="branding-form">
+            <div class="form-group">
+              <label>Company Name:</label>
+              <input type="text" id="companyName" value="RemotePC" onchange="updateBranding()">
+            </div>
+            <div class="form-group">
+              <label>Logo/Icon:</label>
+              <input type="text" id="companyLogo" value="🖥️" onchange="updateBranding()">
+            </div>
+            <div class="form-group">
+              <label>Primary Color:</label>
+              <input type="color" id="primaryColor" value="#00d4aa" onchange="updateBranding()">
+            </div>
+            <div class="form-group">
+              <label>Secondary Color:</label>
+              <input type="color" id="secondaryColor" value="#4f8cff" onchange="updateBranding()">
+            </div>
+            <div class="form-group">
+              <label><input type="checkbox" id="whiteLabel" onchange="updateBranding()"> White Label Mode</label>
+            </div>
+          </div>
+        </div>
+        <div id="paymentsTab" class="tab-content">
+          <div class="payments-setup">
+            <div class="form-group">
+              <label><input type="checkbox" id="stripeEnabled" onchange="updatePayments()"> Enable Stripe Payments</label>
+            </div>
+            <div id="stripeConfig" style="display:none;">
+              <div class="form-group">
+                <label>Stripe Publishable Key:</label>
+                <input type="password" id="stripePubKey" placeholder="pk_live_...">
+              </div>
+              <div class="form-group">
+                <label>Stripe Secret Key:</label>
+                <input type="password" id="stripeSecretKey" placeholder="sk_live_...">
+              </div>
+              <button class="btn-docker" onclick="saveStripeKeys()">Save Keys</button>
+            </div>
+            <div class="pricing-plans" id="pricingPlans"></div>
+          </div>
+        </div>
+        <div id="webhooksTab" class="tab-content">
+          <div class="webhooks-setup">
+            <div class="form-group">
+              <label><input type="checkbox" id="webhooksEnabled" checked onchange="updateWebhooks()"> Enable Webhooks</label>
+            </div>
+            <div class="form-group">
+              <label>Webhook Secret:</label>
+              <input type="text" id="webhookSecret" value="remotepc-webhook-secret-2024">
+            </div>
+            <button class="btn-docker" onclick="testWebhook()">Test Webhook</button>
+            <div class="webhook-events" id="webhookEvents"></div>
+          </div>
+        </div>
+        <div id="apiTab" class="tab-content">
+          <div class="api-docs">
+            <h3>REST API Endpoints</h3>
+            <div class="api-endpoint">
+              <strong>GET /api/v1/status</strong> - System status overview
+            </div>
+            <div class="api-endpoint">
+              <strong>GET /api/v1/stats</strong> - Real-time statistics
+            </div>
+            <div class="api-endpoint">
+              <strong>GET /api/v1/processes</strong> - Process list
+            </div>
+            <div class="api-endpoint">
+              <strong>GET /api/v1/files?dir=path</strong> - File browser
+            </div>
+            <div class="api-endpoint">
+              <strong>POST /api/v1/control/restart</strong> - Remote restart
+            </div>
+            <div class="api-endpoint">
+              <strong>POST /api/v1/control/shutdown</strong> - Remote shutdown
+            </div>
+            <div class="api-endpoint">
+              <strong>GET /api/v1/webhooks</strong> - Webhook events
+            </div>
+            <div class="form-group">
+              <label>API Rate Limit (req/hour):</label>
+              <input type="number" id="apiRateLimit" value="1000" onchange="updateAPIRateLimit()">
+            </div>
+            <div class="api-keys">
+              <h4>API Authentication</h4>
+              <p>Use Bearer token: <code>Authorization: Bearer karma123</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
 
     <div class="section">
@@ -1329,6 +1493,166 @@ const html = `<!DOCTYPE html>
       log('💻 System ' + (section.style.display === 'none' ? 'closed' : 'opened'));
     }
 
+    // Enterprise Features
+    function toggleEnterprise() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('enterpriseSection');
+      section.style.display = section.style.display === 'block' ? 'none' : 'block';
+      if (section.style.display === 'block') {
+        loadEnterpriseData();
+      }
+      log('🏢 Enterprise ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
+
+    function showEnterpriseTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabName + 'Tab').classList.add('active');
+
+      if (tabName === 'payments') loadPricingPlans();
+      if (tabName === 'webhooks') loadWebhookEvents();
+    }
+
+    async function loadEnterpriseData() {
+      try {
+        const brandingRes = await fetch('/api/v1/branding');
+        const branding = await brandingRes.json();
+
+        document.getElementById('companyName').value = branding.branding.companyName;
+        document.getElementById('companyLogo').value = branding.branding.logo;
+        document.getElementById('primaryColor').value = branding.branding.primaryColor;
+        document.getElementById('secondaryColor').value = branding.branding.secondaryColor;
+        document.getElementById('whiteLabel').checked = branding.branding.whiteLabel;
+      } catch(e) {
+        log('Error loading enterprise data: ' + e.message);
+      }
+    }
+
+    async function updateBranding() {
+      const updates = {
+        companyName: document.getElementById('companyName').value,
+        logo: document.getElementById('companyLogo').value,
+        primaryColor: document.getElementById('primaryColor').value,
+        secondaryColor: document.getElementById('secondaryColor').value,
+        whiteLabel: document.getElementById('whiteLabel').checked
+      };
+
+      try {
+        const res = await fetch('/api/v1/branding', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + PASS},
+          body: JSON.stringify(updates)
+        });
+        const data = await res.json();
+        if (data.success) {
+          log('✅ Branding updated');
+          // Update UI with new branding
+          document.querySelector('h1').innerHTML = updates.logo + ' <span>' + updates.companyName + '</span>';
+        }
+      } catch(e) {
+        log('Error updating branding: ' + e.message);
+      }
+    }
+
+    async function loadPricingPlans() {
+      try {
+        const res = await fetch('/api/v1/stripe/plans');
+        const data = await res.json();
+        const plansEl = document.getElementById('pricingPlans');
+        plansEl.innerHTML = Object.entries(data.plans).map(([id, plan]) =>
+          '<div class="pricing-plan">' +
+          '<div class="plan-header">' +
+          '<strong>' + id.charAt(0).toUpperCase() + id.slice(1) + '</strong>' +
+          '<span class="plan-price">$' + plan.price + '/mo</span>' +
+          '</div>' +
+          '<div class="plan-features">' + plan.features.join(' • ') + '</div>' +
+          '<button class="btn-docker" onclick="createCheckoutSession(\'' + id + '\')">Subscribe</button>' +
+          '</div>'
+        ).join('');
+      } catch(e) {
+        log('Error loading pricing plans: ' + e.message);
+      }
+    }
+
+    function updatePayments() {
+      const enabled = document.getElementById('stripeEnabled').checked;
+      document.getElementById('stripeConfig').style.display = enabled ? 'block' : 'none';
+    }
+
+    async function saveStripeKeys() {
+      const pubKey = document.getElementById('stripePubKey').value;
+      const secretKey = document.getElementById('stripeSecretKey').value;
+
+      // In production, save to secure storage
+      log('💳 Stripe keys configured (demo mode)');
+    }
+
+    async function createCheckoutSession(planId) {
+      const email = prompt('Enter your email for billing:');
+      if (!email) return;
+
+      try {
+        const res = await fetch('/api/v1/stripe/create-session', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ planId, email })
+        });
+        const data = await res.json();
+        if (data.session) {
+          log('💳 Redirecting to Stripe checkout...');
+          window.open(data.session.url, '_blank');
+        }
+      } catch(e) {
+        log('Error creating checkout session: ' + e.message);
+      }
+    }
+
+    async function loadWebhookEvents() {
+      try {
+        const res = await fetch('/api/v1/webhooks', {
+          headers: {'Authorization': 'Bearer ' + PASS}
+        });
+        const data = await res.json();
+        const eventsEl = document.getElementById('webhookEvents');
+        eventsEl.innerHTML = data.webhooks.slice(-10).reverse().map(event =>
+          '<div class="webhook-event">' +
+          '<strong>' + event.event + '</strong> - ' + new Date(event.timestamp).toLocaleString() +
+          '<br><small>' + JSON.stringify(event.data).substring(0, 100) + '...</small>' +
+          '</div>'
+        ).join('');
+      } catch(e) {
+        log('Error loading webhook events: ' + e.message);
+      }
+    }
+
+    async function testWebhook() {
+      try {
+        const res = await fetch('/api/v1/webhooks/test', {
+          method: 'POST',
+          headers: {'Authorization': 'Bearer ' + PASS}
+        });
+        const data = await res.json();
+        if (data.success) {
+          log('🔗 Test webhook sent');
+          loadWebhookEvents();
+        }
+      } catch(e) {
+        log('Error testing webhook: ' + e.message);
+      }
+    }
+
+    function updateWebhooks() {
+      const enabled = document.getElementById('webhooksEnabled').checked;
+      log('🔗 Webhooks ' + (enabled ? 'enabled' : 'disabled'));
+    }
+
+    function updateAPIRateLimit() {
+      const limit = document.getElementById('apiRateLimit').value;
+      log('🔌 API rate limit updated to ' + limit + ' req/hour');
+    }
+
     async function fetchSystemInfo() {
       const infoEl = document.getElementById('systemInfo');
       infoEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading system info...</div>';
@@ -1545,6 +1869,52 @@ function checkRateLimit(clientIP) {
   if (!requestCounts.has(clientIP)) {
     requestCounts.set(clientIP, []);
   }
+
+  const requests = requestCounts.get(clientIP);
+  const validRequests = requests.filter(time => time > windowStart);
+  requestCounts.set(clientIP, validRequests);
+
+  if (validRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  validRequests.push(now);
+  return true;
+}
+
+// =============== WEBHOOKS ===============
+const WEBHOOK_EVENTS = [];
+
+function triggerWebhook(event, data) {
+  if (!ENTERPRISE_CONFIG.api.webhooksEnabled) return;
+
+  const webhookData = {
+    event,
+    timestamp: new Date().toISOString(),
+    data,
+    source: 'RemotePC'
+  };
+
+  WEBHOOK_EVENTS.push(webhookData);
+
+  // In production, this would POST to configured webhook URLs
+  console.log('Webhook triggered:', webhookData);
+}
+
+// =============== STRIPE INTEGRATION ===============
+function createStripeSession(planId, userEmail) {
+  // Mock Stripe session creation (would use actual Stripe SDK in production)
+  const plan = ENTERPRISE_CONFIG.payments.plans[planId];
+  if (!plan) throw new Error('Invalid plan');
+
+  return {
+    id: 'cs_mock_' + Math.random().toString(36).substring(2),
+    url: 'https://checkout.stripe.com/pay/cs_mock_' + Math.random().toString(36).substring(2),
+    plan: planId,
+    amount: plan.price,
+    email: userEmail
+  };
+}
 
   const requests = requestCounts.get(clientIP);
   const validRequests = requests.filter((time) => time > windowStart);
@@ -2242,6 +2612,107 @@ const server = http.createServer((req, res) => {
     const alerts = getAlerts(0, 0); // Would need current stats
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ alerts, customAlerts: CUSTOM_ALERTS }));
+    return;
+  }
+
+  // Enterprise API Endpoints
+  if (req.url === "/api/v1/webhooks") {
+    if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ webhooks: WEBHOOK_EVENTS.slice(-50) })); // Last 50 events
+    return;
+  }
+
+  if (req.url === "/api/v1/webhooks/test" && req.method === "POST") {
+    if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    triggerWebhook('test', { message: 'Test webhook from RemotePC' });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, message: 'Test webhook sent' }));
+    return;
+  }
+
+  if (req.url === "/api/v1/stripe/plans") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ plans: ENTERPRISE_CONFIG.payments.plans }));
+    return;
+  }
+
+  if (req.url === "/api/v1/stripe/create-session" && req.method === "POST") {
+    if (!ENTERPRISE_CONFIG.payments.stripeEnabled) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Stripe integration not configured" }));
+      return;
+    }
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { planId, email } = JSON.parse(body);
+        const session = createStripeSession(planId, email);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ session }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === "/api/v1/stripe/webhook" && req.method === "POST") {
+    // Stripe webhook endpoint
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        // In production, verify Stripe signature
+        const event = JSON.parse(body);
+        triggerWebhook('stripe.' + event.type, event.data);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ received: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Webhook error" }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === "/api/v1/branding") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ branding: ENTERPRISE_CONFIG.branding }));
+    return;
+  }
+
+  if (req.url === "/api/v1/branding" && req.method === "PUT") {
+    if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const updates = JSON.parse(body);
+        Object.assign(ENTERPRISE_CONFIG.branding, updates);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, branding: ENTERPRISE_CONFIG.branding }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
     return;

@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
-  "version": "1.7.0",
-  "description": "Remote PC monitoring and control platform v1.7 - Full SaaS with Mobile Apps, Analytics, Database, Authentication",
+  "version": "1.8.0",
+  "description": "Remote PC monitoring and control platform v1.8 - File Transfer, Google Drive Backup, Admin Dashboard, Complete SaaS",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",
@@ -38,6 +38,9 @@
     "ws": "^8.20.0",
     "better-sqlite3": "^9.4.3",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "googleapis": "^126.0.1",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3"
   }
 }

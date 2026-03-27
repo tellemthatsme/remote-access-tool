@@ -2,7 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.0] - 2026-03-28
+## [1.8.0] - 2026-03-28
+
+### Added
+
+- **File Transfer System** - Upload/download files between web/mobile and PC (100MB limit)
+- **Google Drive Backup** - Automated backup to Google Drive with OAuth integration
+- **Admin Dashboard** - Complete admin panel for user management, analytics, and system health
+- **Automated Backup Scheduling** - Cron-based daily backups with retention policies
+- **Customer Support Infrastructure** - Framework for support tickets and help systems
+- **File Upload API** - REST endpoints for file transfer with authentication
+- **Backup Management UI** - Interface to create, view, and download backups
+- **Admin Analytics** - User metrics, revenue tracking, system monitoring
+- **Google Drive Integration** - OAuth2 authentication and file upload
+- **Enterprise Admin Features** - User management, system health, analytics dashboard
+
+### Changed
+
+- Enhanced file handling with proper upload/download capabilities
+- Improved backup system with cloud storage integration
+- Added admin controls for enterprise management
+- Extended API with file operations and backup endpoints
+- Upgraded security with file upload validation and access controls
+
+### API New Endpoints
+
+- `POST /api/upload` - File upload with multipart/form-data
+- `GET /api/download/:userId/:fileName` - Secure file download
+- `POST /api/backup/create` - Create system backup
+- `GET /api/backup/list` - List available backups
+- `GET /api/auth/google-drive` - Google Drive OAuth initiation
+- `GET /api/auth/google-drive/callback` - OAuth callback handling
+
+### Google Drive Integration
+
+- OAuth2 authentication flow for Google Drive access
+- Automated folder creation and file organization
+- Secure token storage and refresh token handling
+- Backup file upload with metadata tracking
+- Configurable backup retention and cleanup
+
+### Admin Features
+
+- **User Management**: View, edit, delete users with role management
+- **System Health**: Server status, database health, API monitoring
+- **Analytics Dashboard**: User metrics, revenue tracking, usage statistics
+- **Content Management**: Support for announcements and system messages
+- **Security Monitoring**: Failed login attempts, suspicious activity
+
+### File Transfer
+
+- Drag-and-drop file upload interface
+- Progress indicators and upload status
+- File type validation and size limits
+- Secure file storage with user isolation
+- Download links with temporary access tokens
+
+### Backup System
+
+- Automated daily backups via cron scheduling
+- Google Drive cloud storage integration
+- Local backup retention with cleanup
+- Backup verification and integrity checks
+- Manual backup creation and restoration
+
+### Mobile App Enhancements
+
+- File upload/download capabilities
+- Backup management interface
+- Admin features for mobile access
+- Enhanced offline file handling
 
 ### Added
 

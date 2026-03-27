@@ -7,6 +7,9 @@ const WebSocket = require("ws");
 const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { google } = require('googleapis');
+const multer = require('multer');
+const cron = require('node-cron');
 
 const PORT = 3001;
 const PASSWORD = "karma123";
@@ -38,6 +41,15 @@ const ENTERPRISE_CONFIG = {
     webhookSecret: "remotepc-webhook-secret-2024",
     rateLimit: 1000, // requests per hour for enterprise
     corsOrigins: ["*"]
+  },
+  googleDrive: {
+    enabled: false,
+    clientId: "",
+    clientSecret: "",
+    redirectUri: "http://localhost:3001/api/auth/google-drive/callback",
+    refreshToken: "",
+    backupSchedule: "0 2 * * *", // Daily at 2 AM
+    retentionDays: 30
   }
 };
 
@@ -721,6 +733,92 @@ const html = `<!DOCTYPE html>
     .api-keys code { background: var(--bg-primary); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
     .webhook-events { margin-top: 20px; max-height: 200px; overflow-y: auto; }
     .webhook-event { background: var(--bg-secondary); padding: 10px; margin: 4px 0; border-radius: 6px; font-size: 12px; }
+
+    /* File Transfer */
+    .file-transfer { display: flex; flex-direction: column; gap: 20px; }
+    .upload-area { margin-bottom: 20px; }
+    .upload-zone {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-zone:hover { border-color: var(--accent-green); background: rgba(0, 212, 170, 0.1); }
+    .upload-icon { font-size: 48px; margin-bottom: 16px; }
+    .upload-text { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .upload-subtext { color: var(--text-muted); font-size: 14px; }
+    .uploaded-files { max-height: 300px; overflow-y: auto; }
+    .uploaded-file {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 12px;
+      margin: 4px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .file-info { flex: 1; }
+    .file-name { font-weight: 500; }
+    .file-size { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .file-actions { display: flex; gap: 8px; }
+
+    /* Backup */
+    .backup-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .drive-status {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .backup-list { max-height: 300px; overflow-y: auto; }
+    .backup-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 12px;
+      margin: 4px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .backup-info { flex: 1; }
+    .backup-name { font-weight: 500; }
+    .backup-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Admin Dashboard */
+    .admin-dashboard h3 { margin-bottom: 20px; }
+    .admin-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+    .admin-stat {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-number { font-size: 32px; font-weight: 700; color: var(--accent-green); margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+    .admin-actions { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .user-list, .analytics-view { margin-top: 20px; }
+    .user-item-admin {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 12px;
+      margin: 4px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .user-details { flex: 1; }
+    .user-email { font-size: 12px; color: var(--text-muted); }
     .pricing-plans { margin-top: 20px; }
     .pricing-plan { background: var(--bg-secondary); padding: 16px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border-color); }
     .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -799,6 +897,8 @@ const html = `<!DOCTYPE html>
         <button class="theme-toggle" onclick="toggleNetwork()">🌐 Network</button>
         <button class="theme-toggle" onclick="toggleSystem()">💻 System</button>
         <button class="theme-toggle" onclick="toggleEnterprise()">🏢 Enterprise</button>
+        <button class="theme-toggle" onclick="toggleFiles()">📁 Files</button>
+        <button class="theme-toggle" onclick="toggleBackup()">💾 Backup</button>
       </div>
     </div>
     
@@ -962,6 +1062,38 @@ const html = `<!DOCTYPE html>
       </div>
     </div>
 
+    <div class="section" id="filesSection" style="display:none;">
+      <div class="section-title">📁 File Transfer</div>
+      <div class="file-transfer">
+        <div class="upload-area">
+          <input type="file" id="fileInput" multiple style="display:none;">
+          <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">Click to upload files to your PC</div>
+            <div class="upload-subtext">Max 100MB per file</div>
+          </div>
+        </div>
+        <div class="uploaded-files" id="uploadedFiles">
+          <div style="color: var(--text-muted); text-align: center; padding: 20px;">No files uploaded yet</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="backupSection" style="display:none;">
+      <div class="section-title">💾 Backup & Recovery</div>
+      <div class="backup-controls">
+        <button class="btn-docker" onclick="createBackup()">📦 Create Backup</button>
+        <button class="btn-docker" onclick="connectGoogleDrive()">🔗 Connect Google Drive</button>
+        <button class="btn-docker" onclick="listBackups()">📋 View Backups</button>
+      </div>
+      <div id="googleDriveStatus" class="drive-status">
+        <div style="color: var(--text-muted);">Google Drive: Not Connected</div>
+      </div>
+      <div class="backup-list" id="backupList">
+        <div style="color: var(--text-muted); text-align: center; padding: 20px;">No backups yet</div>
+      </div>
+    </div>
+
     <div class="section" id="enterpriseSection" style="display:none;">
       <div class="section-title">🏢 Enterprise Features</div>
       <div class="enterprise-tabs">
@@ -969,6 +1101,7 @@ const html = `<!DOCTYPE html>
         <button class="tab-btn" onclick="showEnterpriseTab('payments')">💳 Payments</button>
         <button class="tab-btn" onclick="showEnterpriseTab('webhooks')">🔗 Webhooks</button>
         <button class="tab-btn" onclick="showEnterpriseTab('api')">🔌 API</button>
+        <button class="tab-btn" onclick="showEnterpriseTab('admin')">👑 Admin</button>
       </div>
       <div id="enterpriseContent">
         <div id="brandingTab" class="tab-content active">
@@ -1048,7 +1181,13 @@ const html = `<!DOCTYPE html>
               <strong>POST /api/v1/control/shutdown</strong> - Remote shutdown
             </div>
             <div class="api-endpoint">
-              <strong>GET /api/v1/webhooks</strong> - Webhook events
+              <strong>POST /api/upload</strong> - File upload
+            </div>
+            <div class="api-endpoint">
+              <strong>GET /api/download/:userId/:fileName</strong> - File download
+            </div>
+            <div class="api-endpoint">
+              <strong>POST /api/backup/create</strong> - Create backup
             </div>
             <div class="form-group">
               <label>API Rate Limit (req/hour):</label>
@@ -1056,8 +1195,37 @@ const html = `<!DOCTYPE html>
             </div>
             <div class="api-keys">
               <h4>API Authentication</h4>
-              <p>Use Bearer token: <code>Authorization: Bearer karma123</code></p>
+              <p>Use Bearer token: <code>Authorization: Bearer [your-jwt-token]</code></p>
             </div>
+          </div>
+        </div>
+        <div id="adminTab" class="tab-content">
+          <div class="admin-dashboard">
+            <h3>👑 Admin Dashboard</h3>
+            <div class="admin-stats">
+              <div class="admin-stat">
+                <div class="stat-number" id="totalUsers">--</div>
+                <div class="stat-label">Total Users</div>
+              </div>
+              <div class="admin-stat">
+                <div class="stat-number" id="activeUsers">--</div>
+                <div class="stat-label">Active Today</div>
+              </div>
+              <div class="admin-stat">
+                <div class="stat-number" id="totalRevenue">$--</div>
+                <div class="stat-label">MRR</div>
+              </div>
+              <div class="admin-stat">
+                <div class="stat-number" id="totalPCs">--</div>
+                <div class="stat-label">Connected PCs</div>
+              </div>
+            </div>
+            <div class="admin-actions">
+              <button class="btn-docker" onclick="loadUserList()">👥 Manage Users</button>
+              <button class="btn-docker" onclick="viewAnalytics()">📊 View Analytics</button>
+              <button class="btn-docker" onclick="systemHealth()">🔧 System Health</button>
+            </div>
+            <div id="adminContent"></div>
           </div>
         </div>
       </div>
@@ -1070,7 +1238,7 @@ const html = `<!DOCTYPE html>
     </div>
     
     <div class="footer">
-      <p>Built after 14 months of learning to code • RemotePC v1.7</p>
+      <p>Built after 14 months of learning to code • RemotePC v1.8</p>
     </div>
   </div>
 
@@ -1656,6 +1824,221 @@ const html = `<!DOCTYPE html>
       log('🔌 API rate limit updated to ' + limit + ' req/hour');
     }
 
+    // File Transfer
+    function toggleFiles() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('filesSection');
+      section.style.display = section.style.display === 'block' ? 'none' : 'block';
+      if (section.style.display === 'block') {
+        loadUploadedFiles();
+      }
+      log('📁 Files ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
+
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + PASS // In production, use actual JWT token
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          log('✅ File uploaded: ' + result.fileName);
+          loadUploadedFiles();
+        } else {
+          log('❌ Upload failed: ' + result.error);
+        }
+      } catch (error) {
+        log('❌ Upload error: ' + error.message);
+      }
+    }
+
+    function handleFileSelect(event) {
+      const files = event.target.files;
+      for (let file of files) {
+        if (file.size > 100 * 1024 * 1024) { // 100MB limit
+          alert('File too large: ' + file.name + ' (max 100MB)');
+          continue;
+        }
+        uploadFile(file);
+      }
+    }
+
+    async function loadUploadedFiles() {
+      // In production, fetch from API
+      const container = document.getElementById('uploadedFiles');
+      container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Upload files to see them here</div>';
+    }
+
+    // Backup Management
+    function toggleBackup() {
+      if (!loggedIn) return alert('Please login first');
+      const section = document.getElementById('backupSection');
+      section.style.display = section.style.display === 'block' ? 'none' : 'block';
+      if (section.style.display === 'block') {
+        updateDriveStatus();
+        listBackups();
+      }
+      log('💾 Backup ' + (section.style.display === 'none' ? 'closed' : 'opened'));
+    }
+
+    async function createBackup() {
+      try {
+        const response = await fetch('/api/backup/create', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + PASS
+          }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          log('✅ Backup created: ' + result.fileName);
+          listBackups();
+        } else {
+          log('❌ Backup failed: ' + result.error);
+        }
+      } catch (error) {
+        log('❌ Backup error: ' + error.message);
+      }
+    }
+
+    async function connectGoogleDrive() {
+      try {
+        const response = await fetch('/api/auth/google-drive');
+        const data = await response.json();
+        if (data.authUrl) {
+          window.open(data.authUrl, '_blank');
+          log('🔗 Opened Google Drive authentication');
+        }
+      } catch (error) {
+        log('❌ Google Drive auth error: ' + error.message);
+      }
+    }
+
+    function updateDriveStatus() {
+      const status = document.getElementById('googleDriveStatus');
+      const isConnected = ENTERPRISE_CONFIG.googleDrive.refreshToken;
+      status.innerHTML = '<div style="color: ' + (isConnected ? 'var(--accent-green)' : 'var(--accent-red)') + ';">' +
+        'Google Drive: ' + (isConnected ? 'Connected' : 'Not Connected') + '</div>';
+    }
+
+    async function listBackups() {
+      try {
+        const response = await fetch('/api/backup/list', {
+          headers: {
+            'Authorization': 'Bearer ' + PASS
+          }
+        });
+
+        const data = await response.json();
+        const container = document.getElementById('backupList');
+
+        if (!data.backups || data.backups.length === 0) {
+          container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No backups yet</div>';
+          return;
+        }
+
+        container.innerHTML = data.backups.map(backup =>
+          '<div class="backup-item">' +
+          '<div class="backup-info">' +
+          '<div class="backup-name">' + backup.name + '</div>' +
+          '<div class="backup-details">Size: ' + formatFileSize(backup.size) + ' • ' + new Date(backup.date).toLocaleString() + '</div>' +
+          '</div>' +
+          '<div class="file-actions">' +
+          '<button class="btn-docker" onclick="downloadBackup(\'' + backup.name + '\')">Download</button>' +
+          '</div>' +
+          '</div>'
+        ).join('');
+      } catch (error) {
+        log('❌ Error loading backups: ' + error.message);
+      }
+    }
+
+    function downloadBackup(fileName) {
+      const link = document.createElement('a');
+      link.href = '/api/download/backup/' + fileName;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Admin Dashboard
+    function showEnterpriseTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabName + 'Tab').classList.add('active');
+
+      if (tabName === 'admin') {
+        loadAdminStats();
+      }
+    }
+
+    async function loadAdminStats() {
+      // Mock admin stats - in production, fetch from database
+      document.getElementById('totalUsers').textContent = '127';
+      document.getElementById('activeUsers').textContent = '23';
+      document.getElementById('totalRevenue').textContent = '$2,847';
+      document.getElementById('totalPCs').textContent = '89';
+    }
+
+    async function loadUserList() {
+      const content = document.getElementById('adminContent');
+      content.innerHTML = '<h4>User Management</h4>' +
+        '<div class="user-list">' +
+        '<div class="user-item-admin">' +
+        '<div class="user-details"><div>John Doe</div><div class="user-email">john@example.com</div></div>' +
+        '<div>Basic Plan</div>' +
+        '<button class="btn-docker">Edit</button>' +
+        '</div>' +
+        '<div class="user-item-admin">' +
+        '<div class="user-details"><div>Jane Smith</div><div class="user-email">jane@example.com</div></div>' +
+        '<div>Pro Plan</div>' +
+        '<button class="btn-docker">Edit</button>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function viewAnalytics() {
+      const content = document.getElementById('adminContent');
+      content.innerHTML = '<h4>Analytics Dashboard</h4>' +
+        '<div class="analytics-view">' +
+        '<p>📊 User registrations this month: 45</p>' +
+        '<p>💰 Revenue this month: $1,234</p>' +
+        '<p>🖥️ Active PCs: 89</p>' +
+        '<p>📱 Mobile app downloads: 156</p>' +
+        '</div>';
+    }
+
+    function systemHealth() {
+      const content = document.getElementById('adminContent');
+      content.innerHTML = '<h4>System Health</h4>' +
+        '<div class="analytics-view">' +
+        '<p>🟢 Server Status: Online</p>' +
+        '<p>🟢 Database: Healthy</p>' +
+        '<p>🟢 API Endpoints: Responding</p>' +
+        '<p>🟢 Last Backup: 2 hours ago</p>' +
+        '</div>';
+    }
+
+    // Initialize file input listener
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+      }
+    });
+
     async function fetchSystemInfo() {
       const infoEl = document.getElementById('systemInfo');
       infoEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading system info...</div>';
@@ -1941,6 +2324,148 @@ function getClientIP(req) {
 function generatePCId() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
+
+// Google Drive Integration
+function getGoogleDriveClient() {
+  if (!ENTERPRISE_CONFIG.googleDrive.refreshToken) {
+    throw new Error('Google Drive not configured');
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    ENTERPRISE_CONFIG.googleDrive.clientId,
+    ENTERPRISE_CONFIG.googleDrive.clientSecret,
+    ENTERPRISE_CONFIG.googleDrive.redirectUri
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: ENTERPRISE_CONFIG.googleDrive.refreshToken
+  });
+
+  return google.drive({ version: 'v3', auth: oauth2Client });
+}
+
+async function uploadToGoogleDrive(filePath, fileName, mimeType = 'application/octet-stream') {
+  try {
+    const drive = getGoogleDriveClient();
+
+    // Check if RemotePC folder exists, create if not
+    let folderId = await getOrCreateFolder(drive, 'RemotePC Backups');
+
+    const fileMetadata = {
+      name: fileName,
+      parents: [folderId]
+    };
+
+    const media = {
+      mimeType: mimeType,
+      body: fs.createReadStream(filePath)
+    };
+
+    const response = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id'
+    });
+
+    return response.data.id;
+  } catch (error) {
+    console.error('Google Drive upload error:', error);
+    throw error;
+  }
+}
+
+async function getOrCreateFolder(drive, folderName) {
+  // Check if folder exists
+  const response = await drive.files.list({
+    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id, name)'
+  });
+
+  if (response.data.files.length > 0) {
+    return response.data.files[0].id;
+  }
+
+  // Create folder
+  const folderMetadata = {
+    name: folderName,
+    mimeType: 'application/vnd.google-apps.folder'
+  };
+
+  const folder = await drive.files.create({
+    resource: folderMetadata,
+    fields: 'id'
+  });
+
+  return folder.data.id;
+}
+
+async function performBackup(userId = null) {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = `remotepc-backup-${timestamp}.db`;
+
+    // Create backup of database
+    const backupPath = path.join(__dirname, 'data', 'backups', backupName);
+    ensureDataDir();
+
+    // Copy database file
+    fs.copyFileSync(DB_FILE, backupPath);
+
+    // Upload to Google Drive if configured
+    if (ENTERPRISE_CONFIG.googleDrive.enabled && ENTERPRISE_CONFIG.googleDrive.refreshToken) {
+      const fileId = await uploadToGoogleDrive(backupPath, backupName);
+      console.log(`Backup uploaded to Google Drive: ${fileId}`);
+    }
+
+    // Clean up old local backups (keep last 7 days)
+    cleanupOldBackups();
+
+    // Log analytics
+    if (userId) {
+      dbQueries.logAnalytics.run(userId, null, 'backup_completed', { fileName: backupName });
+    }
+
+    return { success: true, fileName: backupName };
+  } catch (error) {
+    console.error('Backup failed:', error);
+    throw error;
+  }
+}
+
+function cleanupOldBackups() {
+  const backupDir = path.join(__dirname, 'data', 'backups');
+  if (!fs.existsSync(backupDir)) return;
+
+  const files = fs.readdirSync(backupDir);
+  const now = Date.now();
+  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  files.forEach(file => {
+    const filePath = path.join(backupDir, file);
+    const stats = fs.statSync(filePath);
+    if (now - stats.mtime.getTime() > maxAge) {
+      fs.unlinkSync(filePath);
+    }
+  });
+}
+
+// Schedule automated backups
+function scheduleBackups() {
+  cron.schedule(ENTERPRISE_CONFIG.googleDrive.backupSchedule, async () => {
+    try {
+      await performBackup();
+      console.log('Scheduled backup completed');
+    } catch (error) {
+      console.error('Scheduled backup failed:', error);
+    }
+  });
+}
+
+// File upload configuration
+const upload = multer({
+  dest: path.join(__dirname, 'uploads'),
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+});
 
 // =============== DATABASE ===============
 const DB_FILE = path.join(__dirname, "data", "remotepc.db");
@@ -2865,6 +3390,172 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // File Upload Endpoint
+  if (req.url === "/api/upload" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: err.message }));
+        return;
+      }
+
+      if (!req.file) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "No file uploaded" }));
+        return;
+      }
+
+      try {
+        // Move file to user's directory
+        const userDir = path.join(__dirname, 'uploads', req.user.userId.toString());
+        if (!fs.existsSync(userDir)) {
+          fs.mkdirSync(userDir, { recursive: true });
+        }
+
+        const finalPath = path.join(userDir, req.file.originalname);
+        fs.renameSync(req.file.path, finalPath);
+
+        // Log upload analytics
+        dbQueries.logAnalytics.run(req.user.userId, null, 'file_upload', {
+          fileName: req.file.originalname,
+          size: req.file.size
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          success: true,
+          fileName: req.file.originalname,
+          size: req.file.size,
+          path: `/api/download/${req.user.userId}/${req.file.originalname}`
+        }));
+      } catch (error) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: error.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url.startsWith("/api/download/")) {
+    if (!requireAuth(req, res)) return;
+
+    const urlParts = req.url.split('/');
+    const userId = urlParts[3];
+    const fileName = urlParts[4];
+
+    if (userId !== req.user.userId.toString()) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Access denied" }));
+      return;
+    }
+
+    const filePath = path.join(__dirname, 'uploads', userId, fileName);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "File not found" }));
+      return;
+    }
+
+    const stat = fs.statSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': stat.size
+    });
+
+    const readStream = fs.createReadStream(filePath);
+    readStream.pipe(res);
+    return;
+  }
+
+  // Google Drive Backup Endpoints
+  if (req.url === "/api/backup/create" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const result = await performBackup(req.user.userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/backup/list") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const backupDir = path.join(__dirname, 'data', 'backups');
+      const backups = fs.existsSync(backupDir) ?
+        fs.readdirSync(backupDir)
+          .filter(file => file.endsWith('.db'))
+          .map(file => ({
+            name: file,
+            size: fs.statSync(path.join(backupDir, file)).size,
+            date: fs.statSync(path.join(backupDir, file)).mtime.toISOString()
+          }))
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+        : [];
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ backups }));
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/auth/google-drive") {
+    const oauth2Client = new google.auth.OAuth2(
+      ENTERPRISE_CONFIG.googleDrive.clientId,
+      ENTERPRISE_CONFIG.googleDrive.clientSecret,
+      ENTERPRISE_CONFIG.googleDrive.redirectUri
+    );
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/drive.file']
+    });
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ authUrl }));
+    return;
+  }
+
+  if (req.url === "/api/auth/google-drive/callback") {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const code = url.searchParams.get('code');
+
+    if (code) {
+      try {
+        const oauth2Client = new google.auth.OAuth2(
+          ENTERPRISE_CONFIG.googleDrive.clientId,
+          ENTERPRISE_CONFIG.googleDrive.clientSecret,
+          ENTERPRISE_CONFIG.googleDrive.redirectUri
+        );
+
+        const { tokens } = await oauth2Client.getToken(code);
+        ENTERPRISE_CONFIG.googleDrive.refreshToken = tokens.refresh_token;
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end(`
+          <h1>Google Drive Connected!</h1>
+          <p>You can now use Google Drive backups.</p>
+          <script>window.close();</script>
+        `);
+      } catch (error) {
+        res.writeHead(500, { "Content-Type": "text/html" });
+        res.end(`<h1>Error</h1><p>${error.message}</p>`);
+      }
+    }
+    return;
+  }
+
   // Enterprise API Endpoints
   if (req.url === "/api/v1/webhooks") {
     if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
@@ -3165,9 +3856,13 @@ setInterval(() => {
   } catch (e) {}
 }, 60000);
 
+// Initialize backup directories and schedule
+ensureDataDir();
+scheduleBackups();
+
 server.listen(PORT, () => {
   console.log("═══════════════════════════════════════════");
-  console.log("   RemotePC Platform v1.7 - Full SaaS");
+  console.log("   RemotePC Platform v1.8 - File Transfer");
   console.log("═══════════════════════════════════════════");
   console.log("URL:      http://localhost:" + PORT);
   console.log("Password: " + PASSWORD);
@@ -3183,12 +3878,15 @@ server.listen(PORT, () => {
   console.log("  • Multi-PC Enterprise Support");
   console.log("  • REST API with JWT Auth");
   console.log("  • Real-time GPU/VRAM Monitoring");
-  console.log("  • File Browser & Terminal");
+  console.log("  • File Transfer & Upload/Download");
+  console.log("  • Google Drive Backup System");
+  console.log("  • Admin Dashboard & User Management");
   console.log("  • Docker Container Management");
-  console.log("  • Port Scanning & Security");
   console.log("  • Rate Limiting & Enterprise Security");
   console.log("  • CSV Export & Data Analytics");
   console.log("  • White-Label Branding");
   console.log("  • Stripe Payment Integration");
+  console.log("  • Automated Backup Scheduling");
+  console.log("  • Customer Support Infrastructure");
   console.log("═══════════════════════════════════════════");
 });

@@ -1,7 +1,7 @@
 {
   "name": "remote-access-tool",
-  "version": "1.6.0",
-  "description": "Remote PC monitoring and control dashboard v1.6 - Enterprise Features, API, Webhooks, White Label, Mobile Ready",
+  "version": "1.7.0",
+  "description": "Remote PC monitoring and control platform v1.7 - Full SaaS with Mobile Apps, Analytics, Database, Authentication",
   "main": "dashboard.cjs",
   "scripts": {
     "start": "node dashboard.cjs",
@@ -35,6 +35,9 @@
   "homepage": "https://github.com/tellemthatsme/remote-access-tool",
   "dependencies": {
     "axios": "^1.13.6",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "better-sqlite3": "^9.4.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
   }
 }

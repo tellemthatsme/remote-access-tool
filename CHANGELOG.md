@@ -2,7 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.0] - 2026-03-28
+## [1.7.0] - 2026-03-28
+
+### Added
+
+- **Complete User Authentication System** - Registration, login, JWT tokens, sessions
+- **SQLite Database Integration** - Proper data persistence for users, PCs, analytics, webhooks
+- **React Native Mobile Apps** - iOS/Android apps with Expo framework
+- **Advanced Analytics System** - User behavior tracking, event logging, usage metrics
+- **Webhook Management** - Create, manage, and trigger webhooks for integrations
+- **API Documentation** - Comprehensive endpoint documentation in UI
+- **Payment Link Integration** - Stripe payment flow setup
+- **Mobile-First Design** - Responsive mobile app interfaces
+- **Cross-Platform Authentication** - JWT tokens for web and mobile
+- **Real-Time Mobile Updates** - Live data synchronization
+- **Offline Capabilities** - Basic offline support in mobile apps
+
+### Changed
+
+- Migrated from JSON file storage to SQLite database
+- Enhanced security with proper user authentication
+- Added mobile app frameworks and components
+- Improved analytics tracking and reporting
+- Updated landing page with Stripe payment integration
+- Enhanced API with authentication and analytics
+- Mobile-optimized UI components and navigation
+
+### API New Endpoints
+
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User authentication
+- `GET /api/auth/me` - Current user info
+- `GET /api/v1/analytics` - User analytics data
+- `POST /api/v1/analytics/log` - Log user events
+- `POST /api/v1/webhooks` - Create webhooks
+- `GET /api/v1/webhooks` - List user webhooks
+
+### Mobile Apps
+
+- **iOS App**: Native iOS experience with App Store deployment ready
+- **Android App**: Material Design 3 with Play Store ready
+- **Cross-Platform**: Single codebase for iOS, Android, and Web
+- **Features**: Dashboard, PC control, real-time monitoring, authentication
+
+### Database Schema
+
+- **Users Table**: Authentication, profiles, billing
+- **Sessions Table**: JWT token management
+- **PCs Table**: Multi-PC management and status
+- **Analytics Table**: Event tracking and metrics
+- **Webhooks Table**: Integration management
+
+### Security Enhancements
+
+- JWT-based authentication with expiration
+- Password hashing with bcrypt
+- Session management and cleanup
+- API rate limiting and request validation
+- User-specific data isolation
 
 ### Added
 

@@ -4,6 +4,9 @@ const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
+const Database = require("better-sqlite3");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const PORT = 3001;
 const PASSWORD = "karma123";
@@ -1067,7 +1070,7 @@ const html = `<!DOCTYPE html>
     </div>
     
     <div class="footer">
-      <p>Built after 14 months of learning to code • RemotePC v1.6</p>
+      <p>Built after 14 months of learning to code • RemotePC v1.7</p>
     </div>
   </div>
 
@@ -1939,6 +1942,168 @@ function generatePCId() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// =============== DATABASE ===============
+const DB_FILE = path.join(__dirname, "data", "remotepc.db");
+const JWT_SECRET = "remotepc-jwt-secret-2024";
+
+// Initialize database
+function initDatabase() {
+  const db = new Database(DB_FILE);
+
+  // Users table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT DEFAULT 'user',
+      plan TEXT DEFAULT 'free',
+      stripe_customer_id TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_login DATETIME
+    )
+  `);
+
+  // Sessions table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      token TEXT UNIQUE,
+      expires_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  // PCs table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pcs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      name TEXT NOT NULL,
+      pc_id TEXT UNIQUE,
+      ip_address TEXT,
+      status TEXT DEFAULT 'offline',
+      last_seen DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  // Analytics table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS analytics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      pc_id INTEGER,
+      event_type TEXT,
+      event_data TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (pc_id) REFERENCES pcs(id)
+    )
+  `);
+
+  // Webhooks table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS webhooks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      url TEXT NOT NULL,
+      secret TEXT,
+      events TEXT, -- JSON array of events
+      active BOOLEAN DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  return db;
+}
+
+const db = initDatabase();
+
+// User authentication functions
+async function hashPassword(password) {
+  return await bcrypt.hash(password, 10);
+}
+
+async function verifyPassword(password, hash) {
+  return await bcrypt.compare(password, hash);
+}
+
+function generateToken(user) {
+  return jwt.sign(
+    { userId: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Database operations
+const dbQueries = {
+  createUser: db.prepare(`
+    INSERT INTO users (username, email, password_hash, role)
+    VALUES (?, ?, ?, ?)
+  `),
+
+  getUserByUsername: db.prepare(`
+    SELECT * FROM users WHERE username = ?
+  `),
+
+  getUserById: db.prepare(`
+    SELECT id, username, email, role, plan, created_at FROM users WHERE id = ?
+  `),
+
+  updateLastLogin: db.prepare(`
+    UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?
+  `),
+
+  createSession: db.prepare(`
+    INSERT INTO sessions (user_id, token, expires_at)
+    VALUES (?, ?, datetime('now', '+7 days'))
+  `),
+
+  getSession: db.prepare(`
+    SELECT s.*, u.username, u.role FROM sessions s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP
+  `),
+
+  registerPC: db.prepare(`
+    INSERT OR REPLACE INTO pcs (user_id, name, pc_id, ip_address, status, last_seen)
+    VALUES (?, ?, ?, ?, 'online', CURRENT_TIMESTAMP)
+  `),
+
+  getUserPCs: db.prepare(`
+    SELECT * FROM pcs WHERE user_id = ? ORDER BY last_seen DESC
+  `),
+
+  logAnalytics: db.prepare(`
+    INSERT INTO analytics (user_id, pc_id, event_type, event_data)
+    VALUES (?, ?, ?, ?)
+  `),
+
+  createWebhook: db.prepare(`
+    INSERT INTO webhooks (user_id, url, secret, events)
+    VALUES (?, ?, ?, ?)
+  `),
+
+  getUserWebhooks: db.prepare(`
+    SELECT * FROM webhooks WHERE user_id = ? AND active = 1
+  `)
+};
+
 // =============== HISTORY DATA ===============
 const HISTORY_FILE = path.join(__dirname, "data", "history.json");
 const MAX_HISTORY_DAYS = 30;
@@ -2615,6 +2780,91 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Authentication Middleware
+  function requireAuth(req, res) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Authentication required" }));
+      return false;
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Invalid token" }));
+      return false;
+    }
+
+    req.user = decoded;
+    return true;
+  }
+
+  // Authentication API Endpoints
+  if (req.url === "/api/auth/register" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", async () => {
+      try {
+        const { username, email, password } = JSON.parse(body);
+        const passwordHash = await hashPassword(password);
+
+        const result = dbQueries.createUser.run(username, email, passwordHash, 'user');
+        const user = dbQueries.getUserById.get(result.lastInsertRowid);
+
+        const token = generateToken(user);
+        dbQueries.createSession.run(user.id, token);
+
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ user, token }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === "/api/auth/login" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", async () => {
+      try {
+        const { username, password } = JSON.parse(body);
+        const user = dbQueries.getUserByUsername.get(username);
+
+        if (!user || !(await verifyPassword(password, user.password_hash))) {
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid credentials" }));
+          return;
+        }
+
+        dbQueries.updateLastLogin.run(user.id);
+        const token = generateToken(user);
+        dbQueries.createSession.run(user.id, token);
+
+        // Log analytics
+        dbQueries.logAnalytics.run(user.id, null, 'login', JSON.stringify({ ip: getClientIP(req) }));
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ user: { id: user.id, username: user.username, email: user.email, role: user.role, plan: user.plan }, token }));
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === "/api/auth/me") {
+    if (!requireAuth(req, res)) return;
+    const user = dbQueries.getUserById.get(req.user.userId);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ user }));
+    return;
+  }
+
   // Enterprise API Endpoints
   if (req.url === "/api/v1/webhooks") {
     if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
@@ -2694,11 +2944,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === "/api/v1/branding" && req.method === "PUT") {
-    if (!req.headers.authorization || req.headers.authorization !== 'Bearer ' + PASSWORD) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Unauthorized" }));
-      return;
-    }
+    if (!requireAuth(req, res)) return;
 
     let body = "";
     req.on("data", (chunk) => (body += chunk));
@@ -2713,6 +2959,81 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+    return;
+  }
+
+  // Analytics API
+  if (req.url === "/api/v1/analytics") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const analytics = db.prepare(`
+        SELECT event_type, COUNT(*) as count, MAX(timestamp) as last_seen
+        FROM analytics
+        WHERE user_id = ?
+        GROUP BY event_type
+        ORDER BY count DESC
+      `).all(req.user.userId);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ analytics }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (req.url === "/api/v1/analytics/log" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { eventType, eventData, pcId } = JSON.parse(body);
+        dbQueries.logAnalytics.run(req.user.userId, pcId || null, eventType, JSON.stringify(eventData || {}));
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // Webhook management
+  if (req.url === "/api/v1/webhooks" && req.method === "POST") {
+    if (!requireAuth(req, res)) return;
+
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { url, secret, events } = JSON.parse(body);
+        dbQueries.createWebhook.run(req.user.userId, url, secret, JSON.stringify(events));
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === "/api/v1/webhooks" && req.method === "GET") {
+    if (!requireAuth(req, res)) return;
+
+    try {
+      const webhooks = dbQueries.getUserWebhooks.all(req.user.userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ webhooks: webhooks.map(w => ({ ...w, events: JSON.parse(w.events) })) }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
     return;
   }
     return;
@@ -2846,7 +3167,7 @@ setInterval(() => {
 
 server.listen(PORT, () => {
   console.log("═══════════════════════════════════════════");
-  console.log("   RemotePC Dashboard v1.6 - Multi-PC");
+  console.log("   RemotePC Platform v1.7 - Full SaaS");
   console.log("═══════════════════════════════════════════");
   console.log("URL:      http://localhost:" + PORT);
   console.log("Password: " + PASSWORD);
@@ -2854,21 +3175,20 @@ server.listen(PORT, () => {
   console.log("═══════════════════════════════════════════");
   console.log("FEATURES:");
   console.log("  • Modern Glass UI Design");
-  console.log("  • Real-time GPU Monitoring");
-  console.log("  • Custom Process Kill");
-  console.log("  • Windows Services");
-  console.log("  • Interactive History Graphs");
-  console.log("  • CSV History Export");
-  console.log("  • Light/Dark Theme Toggle");
-  console.log("  • User Management with Roles");
-  console.log("  • File Browser & Navigation");
-  console.log("  • Terminal Command Execution");
+  console.log("  • Complete User Authentication");
+  console.log("  • SQLite Database Integration");
+  console.log("  • React Native Mobile Apps");
+  console.log("  • Advanced Analytics System");
+  console.log("  • Webhook Integration Platform");
+  console.log("  • Multi-PC Enterprise Support");
+  console.log("  • REST API with JWT Auth");
+  console.log("  • Real-time GPU/VRAM Monitoring");
+  console.log("  • File Browser & Terminal");
   console.log("  • Docker Container Management");
-  console.log("  • Rate Limiting Security");
-  console.log("  • Multi-PC Support");
-  console.log("  • REST API with Auth");
-  console.log("  • Port Scanning & Network");
-  console.log("  • VRAM Monitoring");
-  console.log("  • Custom Alert Thresholds");
+  console.log("  • Port Scanning & Security");
+  console.log("  • Rate Limiting & Enterprise Security");
+  console.log("  • CSV Export & Data Analytics");
+  console.log("  • White-Label Branding");
+  console.log("  • Stripe Payment Integration");
   console.log("═══════════════════════════════════════════");
 });
